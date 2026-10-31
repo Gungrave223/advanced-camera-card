@@ -15,6 +15,8 @@ The Advanced Camera Card will execute these actions in the following circumstanc
 - When the user uses the `back` / `forward` browser buttons while viewing a
   dashboard.
 
+Actions sent to a specific card (with a `CARD_ID`) run once, and are then removed from the URL.
+
 ## Instructions
 
 To send an action to _all_ Advanced Camera Cards on a dashboard:

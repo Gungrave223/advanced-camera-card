@@ -6,8 +6,9 @@
   --advanced-camera-card-next-prev-size-hover: calc(
     var(--advanced-camera-card-next-prev-size) * 2
   );
-  --advanced-camera-card-left-position: 45px;
-  --advanced-camera-card-right-position: 45px;
+  --advanced-camera-card-left-position: 16px;
+  --advanced-camera-card-right-position: 16px;
+  --advanced-camera-card-next-prev-bottom: 10px;
   --ha-icon-button-size: var(--advanced-camera-card-next-prev-size);
   --mdc-icon-size: calc(var(--ha-icon-button-size) / 2);
 }
@@ -35,13 +36,13 @@
 }
 
 .controls.icons {
-  top: calc(50% - (var(--advanced-camera-card-next-prev-size) / 2));
+  bottom: var(--advanced-camera-card-next-prev-bottom);
 }
 
 .controls.thumbnails {
   border-radius: 50%;
   height: var(--advanced-camera-card-next-prev-size);
-  top: calc(50% - (var(--advanced-camera-card-next-prev-size) / 2));
+  bottom: var(--advanced-camera-card-next-prev-bottom);
   box-shadow: var(--advanced-camera-card-box-shadow-override, 0px 0px 20px 5px black);
   transition: all 0.2s ease-out;
   opacity: 0.8;
@@ -50,27 +51,4 @@
 .controls.thumbnails:hover {
   opacity: 1 !important;
   height: var(--advanced-camera-card-next-prev-size-hover);
-  top: calc(50% - (var(--advanced-camera-card-next-prev-size-hover) / 2));
-}
-
-.controls.left.thumbnails:hover {
-  left: calc(
-    var(--advanced-camera-card-left-position) -
-      (
-        var(--advanced-camera-card-next-prev-size-hover) - var(
-            --advanced-camera-card-next-prev-size
-          )
-      ) / 2
-  );
-}
-
-.controls.right.thumbnails:hover {
-  right: calc(
-    var(--advanced-camera-card-right-position) -
-      (
-        var(--advanced-camera-card-next-prev-size-hover) - var(
-            --advanced-camera-card-next-prev-size
-          )
-      ) / 2
-  );
 }

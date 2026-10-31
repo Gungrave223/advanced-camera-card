@@ -10,6 +10,8 @@ import { createCardAPI } from '../test-utils';
 const setQueryString = (qs: string): void => {
   const location: Location = mock<Location>();
   location.search = qs;
+  location.pathname = '/dash/view';
+  location.hash = '';
 
   vi.spyOn(window, 'location', 'get').mockReturnValue(location);
 };
@@ -149,6 +151,39 @@ describe('QueryStringManager', () => {
       expect(
         api.getViewManager().setViewByParametersWithExistingQuery,
       ).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('should remove executed actions from the URL', () => {
+    it('should remove actions for this card and keep everything else', async () => {
+      setQueryString(
+        '?other=1&advanced-camera-card-action.id.live=' +
+          '&advanced-camera-card-action.another.live=' +
+          '&advanced-camera-card-action.expand=',
+      );
+      const replaceState = vi.spyOn(window.history, 'replaceState');
+      const api = createCardAPI();
+      setCardID(api, 'id');
+
+      await new QueryStringManager(api).executeIfNecessary();
+
+      expect(replaceState).toHaveBeenCalledWith(
+        window.history.state,
+        '',
+        '/dash/view?other=1&advanced-camera-card-action.another.live=' +
+          '&advanced-camera-card-action.expand=',
+      );
+    });
+
+    it('should leave the URL alone without actions for this card', async () => {
+      setQueryString('?advanced-camera-card-action.expand=');
+      const replaceState = vi.spyOn(window.history, 'replaceState');
+      const api = createCardAPI();
+      setCardID(api, 'id');
+
+      await new QueryStringManager(api).executeIfNecessary();
+
+      expect(replaceState).not.toHaveBeenCalled();
     });
   });
 

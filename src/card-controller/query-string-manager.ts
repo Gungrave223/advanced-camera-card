@@ -31,6 +31,13 @@ interface QueryStringViewIntent {
   other?: AdvancedCameraCardCustomActionConfig[];
 }
 
+interface QueryStringParam {
+  key: string;
+  actionName: string;
+  value: string;
+  cardID?: string;
+}
+
 export class QueryStringManager {
   private _api: CardQueryStringAPI;
   private _shouldRun = true;
@@ -51,8 +58,10 @@ export class QueryStringManager {
   public executeIfNecessary = async (): Promise<void> => {
     if (this._shouldRun) {
       this._shouldRun = false;
-      await this._executeViewRelated(this._calculateIntent());
-      await this._executeNonViewRelated(this._calculateIntent());
+      const intent = this._calculateIntent();
+      this._removeExecutedParams();
+      await this._executeViewRelated(intent);
+      await this._executeNonViewRelated(intent);
     }
   };
 
@@ -147,6 +156,25 @@ export class QueryStringManager {
     return result;
   }
 
+  // The URL keeps its parameters after a link is opened, and the card runs them
+  // again on any later navigation in the dashboard. That would reopen a link's
+  // media in the card, and toggle `expand` the wrong way, long after the user has
+  // moved on. Actions for other cards are left for those cards to run.
+  private _removeExecutedParams(): void {
+    const targeted = this._getParams().filter((param) => !!param.cardID);
+    if (!targeted.length) {
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    targeted.forEach((param) => params.delete(param.key));
+    const search = params.toString();
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`,
+    );
+  }
+
   private _getRecordingTime(): Date | null {
     const value = this._getParams().find(
       (param) => param.actionName === 'recording_at',
@@ -157,9 +185,9 @@ export class QueryStringManager {
       : null;
   }
 
-  private _getParams(): { actionName: string; value: string; cardID?: string }[] {
+  private _getParams(): QueryStringParam[] {
     const params = new URLSearchParams(window.location.search);
-    const results: { actionName: string; value: string; cardID?: string }[] = [];
+    const results: QueryStringParam[] = [];
     const configuredCardID = this._api.getConfigManager().getConfig()?.card_id;
     const actionRE = new RegExp(
       /^(advanced-camera-card|frigate-card)-action([.:](?<cardID>\w+))?[.:](?<action>\w+)/,
@@ -175,7 +203,7 @@ export class QueryStringManager {
       if (cardID && cardID !== configuredCardID) {
         continue;
       }
-      results.push({ actionName: match.groups['action'], value, cardID });
+      results.push({ key, actionName: match.groups['action'], value, cardID });
     }
     return results;
   }

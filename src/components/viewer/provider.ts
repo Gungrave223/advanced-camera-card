@@ -332,65 +332,66 @@ export class AdvancedCameraCardViewerProvider extends LitElement implements Medi
     );
 
     return html`${this._renderContainer(html`
-      ${isVideo
-        ? isHLS
-          ? html`<advanced-camera-card-ha-hls-player
-              ${ref(this._refProvider)}
-              allow-exoplayer
-              aria-label="${this.media.getTitle() ?? ''}"
-              ?autoplay=${false}
-              controls
-              muted
-              playsinline
-              title="${this.media.getTitle() ?? ''}"
-              url=${url}
-              .hass=${this.hass}
-              .targetID=${mediaID}
-              ?controls=${this.viewerConfig.controls.builtin}
-            >
-            </advanced-camera-card-ha-hls-player>`
-          : html`
-              <advanced-camera-card-video-player
+        ${isVideo
+          ? isHLS
+            ? html`<advanced-camera-card-ha-hls-player
                 ${ref(this._refProvider)}
-                url=${url}
+                allow-exoplayer
                 aria-label="${this.media.getTitle() ?? ''}"
+                ?autoplay=${false}
+                controls
+                muted
+                playsinline
                 title="${this.media.getTitle() ?? ''}"
+                url=${url}
+                .hass=${this.hass}
                 .targetID=${mediaID}
                 ?controls=${this.viewerConfig.controls.builtin}
               >
-              </advanced-camera-card-video-player>
-            `
-        : html`<advanced-camera-card-image-player
-            ${ref(this._refProvider)}
-            url="${url}"
-            aria-label="${this.media.getTitle() ?? ''}"
-            title="${this.media.getTitle() ?? ''}"
-            .targetID=${mediaID}
-            @click=${() => {
-              if (this.viewerConfig?.snapshot_click_plays_clip) {
-                void this._switchToRelatedClipView();
-              }
-            }}
-          ></advanced-camera-card-image-player>`}
-    `)}
-    ${isVideo
-      ? html`<advanced-camera-card-viewer-footage-time
-          .media=${this.media}
-          .cameraManager=${this.cameraManager}
-          .getPosition=${this._getPosition}
-        ></advanced-camera-card-viewer-footage-time>`
-      : ''}
-    ${isVideo && this.viewerConfig?.controls.back_to_live
-      ? html`<button class="back-to-live" @click=${(ev: Event) => this._backToLive(ev)}>
-          ${localize('media_viewer.back_to_live')}
-        </button>`
-      : ''}
-    ${isVideo && this.viewerConfig?.controls.tap_to_play_pause && this._playbackIcon
-      ? html`<advanced-camera-card-icon
-          class="playback-state"
-          .icon=${{ icon: this._playbackIcon }}
-        ></advanced-camera-card-icon>`
-      : ''}`;
+              </advanced-camera-card-ha-hls-player>`
+            : html`
+                <advanced-camera-card-video-player
+                  ${ref(this._refProvider)}
+                  url=${url}
+                  aria-label="${this.media.getTitle() ?? ''}"
+                  title="${this.media.getTitle() ?? ''}"
+                  .targetID=${mediaID}
+                  ?controls=${this.viewerConfig.controls.builtin}
+                >
+                </advanced-camera-card-video-player>
+              `
+          : html`<advanced-camera-card-image-player
+              ${ref(this._refProvider)}
+              url="${url}"
+              aria-label="${this.media.getTitle() ?? ''}"
+              title="${this.media.getTitle() ?? ''}"
+              .targetID=${mediaID}
+              @click=${() => {
+                if (this.viewerConfig?.snapshot_click_plays_clip) {
+                  void this._switchToRelatedClipView();
+                }
+              }}
+            ></advanced-camera-card-image-player>`}
+      `)}
+      <advanced-camera-card-viewer-footage-time
+        .media=${this.media}
+        .cameraManager=${this.cameraManager}
+        .getPosition=${this._getPosition}
+      ></advanced-camera-card-viewer-footage-time>
+      ${isVideo && this.viewerConfig?.controls.back_to_live
+        ? html`<button
+            class="back-to-live"
+            @click=${(ev: Event) => this._backToLive(ev)}
+          >
+            ${localize('media_viewer.back_to_live')}
+          </button>`
+        : ''}
+      ${isVideo && this.viewerConfig?.controls.tap_to_play_pause && this._playbackIcon
+        ? html`<advanced-camera-card-icon
+            class="playback-state"
+            .icon=${{ icon: this._playbackIcon }}
+          ></advanced-camera-card-icon>`
+        : ''}`;
   }
 
   static get styles(): CSSResultGroup {
