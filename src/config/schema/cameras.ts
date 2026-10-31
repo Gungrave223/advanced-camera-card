@@ -210,7 +210,7 @@ export type CameraMediaType = (typeof CAMERA_MEDIA_TYPES)[number];
 
 const cameraMediaConfigDefault = {
   type: 'auto' as CameraMediaType,
-  reviewed: 'unreviewed' as CameraMediaReviewedFilter,
+  reviewed: 'all' as CameraMediaReviewedFilter,
 };
 
 const CAMERA_MEDIA_REVIEWED_FILTERS = ['unreviewed', 'reviewed', 'all'] as const;

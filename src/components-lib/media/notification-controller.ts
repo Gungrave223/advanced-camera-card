@@ -17,7 +17,6 @@ import {
   downloadMedia,
   navigateToTimeline,
   toggleFavorite,
-  toggleReviewed,
 } from '../../utils/media-actions';
 import type { ViewItem } from '../../view/item';
 import { ViewItemClassifier } from '../../view/item-classifier';
@@ -28,10 +27,6 @@ export interface NotificationControlsContext {
   viewItemManager?: ViewItemManager;
   viewManagerEpoch?: ViewManagerEpoch;
   capabilities?: ViewItemCapabilities | null;
-
-  // Whether to filter reviewed/unreviewed items after changing the reviewed
-  // state.
-  filterReviewed?: boolean;
 }
 
 export class MediaNotificationController {
@@ -228,33 +223,6 @@ export class MediaNotificationController {
 
     if (!item) {
       return controls;
-    }
-
-    if (ViewItemClassifier.isReview(item)) {
-      const isReviewed = item.isReviewed();
-      controls.push({
-        tooltip: isReviewed
-          ? localize('common.set_reviews.unreviewed')
-          : localize('common.set_reviews.reviewed'),
-        icon: isReviewed ? 'mdi:check-circle' : 'mdi:check-circle-outline',
-        actions: {
-          tap_action: createInternalCallbackAction(async (api) => {
-            const success = await toggleReviewed(
-              api.getCardElementManager().getElement(),
-              item,
-              context.viewItemManager,
-              context.viewManagerEpoch,
-              context.filterReviewed,
-            );
-            if (success) {
-              api
-                .getNotificationManager()
-                .setNotification(this.getNotification(context));
-            }
-          }),
-        },
-        dismiss: false,
-      });
     }
 
     if (context.capabilities?.canFavorite && ViewItemClassifier.isMedia(item)) {

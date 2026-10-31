@@ -45,7 +45,6 @@ import { PTZDigitalAction } from './actions/ptz-digital';
 import { PTZMultiAction } from './actions/ptz-multi';
 import { ReloadAction } from './actions/reload';
 import { ScreenshotAction } from './actions/screenshot';
-import { SetReviewAction } from './actions/set-review';
 import { SleepAction } from './actions/sleep';
 import { StatusBarAction } from './actions/status-bar';
 import { SubstreamOffAction } from './actions/substream-off';
@@ -191,8 +190,6 @@ export class ActionFactory {
         return new StatusBarAction(context, action, options?.config);
       case 'reload':
         return new ReloadAction(context, action, options?.config);
-      case 'set_review':
-        return new SetReviewAction(context, action, options?.config);
       case INTERNAL_CALLBACK_ACTION:
         return new InternalCallbackAction(context, action, options?.config);
       case GENERATED_ACTION:

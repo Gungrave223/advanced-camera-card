@@ -129,6 +129,13 @@ ha-card {
   margin: 0;
 }
 
+// A phone in fullscreen has no status bar, so the menu would sit under the front
+// camera cutout. Move it down by its own height (46px) and a little more.
+@media (pointer: coarse) {
+  :host(:fullscreen) {
+    --advanced-camera-card-menu-top-offset: 51px;
+  }
+}
 :host(:fullscreen) #ha-card {
   @include fullscreen-ha-card;
 }

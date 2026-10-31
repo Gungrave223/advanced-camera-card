@@ -20,7 +20,6 @@ import {
   getRecordingsSummary,
   getReviews,
   retainEvent,
-  setReviewsReviewed,
 } from '../../../src/camera-manager/frigate/requests';
 import type {
   FrigateEventQueryResults,
@@ -628,42 +627,6 @@ describe('FrigateCameraManagerEngine', () => {
       );
 
       expect(retainEvent).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('reviewMedia', () => {
-    it('should mark a frigate review as reviewed', async () => {
-      const hass = createHASS();
-      const media = new FrigateReviewViewMedia(
-        'camera-1',
-        createFrigateReview(),
-        'content-id',
-        'thumb',
-        new Date(),
-      );
-      vi.mocked(setReviewsReviewed).mockResolvedValue();
-
-      await createEngine().reviewMedia(hass, createFrigateCameraConfig(), media, true);
-
-      expect(setReviewsReviewed).toHaveBeenCalledWith(
-        hass,
-        'frigate',
-        ['review_id'],
-        true,
-      );
-    });
-
-    it('should do nothing for non-frigate review media', async () => {
-      const media = new ViewMedia(ViewMediaType.Review, { cameraID: 'camera-1' });
-
-      await createEngine().reviewMedia(
-        createHASS(),
-        createFrigateCameraConfig(),
-        media,
-        true,
-      );
-
-      expect(setReviewsReviewed).not.toHaveBeenCalled();
     });
   });
 

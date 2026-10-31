@@ -85,11 +85,6 @@ export const getThumbnailsSchema = (options?: {
         selector: { boolean: {} },
       },
       {
-        name: 'show_review_control',
-        label: localize('config.common.controls.thumbnails.show_review_control'),
-        selector: { boolean: {} },
-      },
-      {
         name: 'show_info_control',
         label: localize('config.common.controls.thumbnails.show_info_control'),
         selector: { boolean: {} },

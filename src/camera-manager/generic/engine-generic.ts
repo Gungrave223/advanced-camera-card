@@ -192,15 +192,6 @@ export class GenericCameraManagerEngine implements CameraManagerEngine {
     return;
   }
 
-  public async reviewMedia(
-    _hass: HomeAssistant,
-    _cameraConfig: CameraConfig,
-    _media: ViewMedia,
-    _reviewed: boolean,
-  ): Promise<void> {
-    return;
-  }
-
   public getQueryResultMaxAge(_query: CameraQuery): number | null {
     return null;
   }

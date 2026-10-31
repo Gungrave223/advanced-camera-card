@@ -233,17 +233,6 @@ describe('GenericCameraManagerEngine', () => {
     ).toBeUndefined();
   });
 
-  it('should review media', async () => {
-    expect(
-      await createEngine().reviewMedia(
-        createHASS(),
-        createGenericCameraConfig(),
-        new TestViewMedia(),
-        true,
-      ),
-    ).toBeUndefined();
-  });
-
   it('should get query result max age', () => {
     expect(
       createEngine().getQueryResultMaxAge({

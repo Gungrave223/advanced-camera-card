@@ -47,7 +47,6 @@ media_gallery:
 | `show_download_control` | `false` | Whether to show the download control on each thumbnail.                                                  |
 | `show_favorite_control` | `true`  | Whether to show the favorite ('star') control on each thumbnail.                                         |
 | `show_info_control`     | `true`  | Whether to show the info ('i') control on each thumbnail.                                                |
-| `show_review_control`   | `true`  | Whether to show the review ('check') control on each thumbnail.                                          |
 | `show_timeline_control` | `false` | Whether to show the timeline ('target') control on each thumbnail.                                       |
 | `size`                  | `100`   | The size of the thumbnails in the gallery. Must be &gt;= `75` and &lt;= `300`.                           |
 
@@ -66,7 +65,6 @@ media_gallery:
       show_download_control: false
       show_favorite_control: true
       show_info_control: true
-      show_review_control: true
       show_timeline_control: false
   actions:
     entity: light.office_main_lights

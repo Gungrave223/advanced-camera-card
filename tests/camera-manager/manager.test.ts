@@ -972,39 +972,6 @@ describe('CameraManager', () => {
     });
   });
 
-  describe('should review media', () => {
-    it('should handle missing camera', async () => {
-      const api = createCardAPI();
-      vi.mocked(api.getHASSManager().getHASS).mockReturnValue(createHASS());
-      const manager = createCameraManager(api);
-      const media = new TestViewMedia();
-
-      await manager.reviewMedia(media, true);
-    });
-
-    it('should succeed', async () => {
-      const api = createCardAPI();
-      const hass = createHASS();
-      vi.mocked(api.getHASSManager().getHASS).mockReturnValue(hass);
-
-      const engine = mock<CameraManagerEngine>();
-      vi.mocked(engine.getEngineType).mockReturnValue(Engine.Generic);
-
-      const manager = createCameraManager(api, engine);
-      await manager.initializeCamerasFromConfig();
-      const media = new TestViewMedia({ cameraID: 'id' });
-
-      await manager.reviewMedia(media, true);
-
-      expect(engine.reviewMedia).toHaveBeenCalledWith(
-        hass,
-        expect.anything(),
-        media,
-        true,
-      );
-    });
-  });
-
   describe('should get recordings', () => {
     it('should succeed', async () => {
       const api = createCardAPI();

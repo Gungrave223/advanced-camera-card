@@ -131,8 +131,7 @@ class ResultSlice {
     }
 
     // When an item is replaced, we create a new array so that users can simply
-    // compare the results objects to determine equality (e.g. trigger Lit
-    // rendering for thumbnails that are marked as reviewed).
+    // compare the results objects to determine equality.
     this._results = [...this._results];
     this._results[index] = newItem;
     return true;

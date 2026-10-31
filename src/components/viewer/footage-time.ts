@@ -129,7 +129,7 @@ export class AdvancedCameraCardViewerFootageTime extends LitElement {
         text-transform: capitalize;
       }
       .time {
-        top: 56px;
+        top: calc(56px + var(--advanced-camera-card-menu-top-offset, 0px));
         right: 0;
       }
     `;

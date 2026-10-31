@@ -131,13 +131,6 @@ export interface CameraManagerEngine {
     favorite: boolean,
   ): Promise<void>;
 
-  reviewMedia(
-    hass: HomeAssistant,
-    cameraConfig: CameraConfig,
-    media: ViewMedia,
-    reviewed: boolean,
-  ): Promise<void>;
-
   getQueryResultMaxAge(query: CameraQuery): number | null;
 
   getMediaSeekTime(

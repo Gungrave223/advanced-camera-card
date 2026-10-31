@@ -8,7 +8,6 @@ import {
   getRecordingsSummary,
   getReviews,
   retainEvent,
-  setReviewsReviewed,
 } from '../../../src/camera-manager/frigate/requests';
 import {
   eventSummarySchema,
@@ -18,7 +17,6 @@ import {
   recordingSegmentsSchema,
   recordingSummarySchema,
   retainResultSchema,
-  reviewResultSchema,
   type EventSummary,
   type FrigateEvent,
   type FrigateReview,
@@ -276,50 +274,5 @@ describe('frigate requests', () => {
       }),
       true,
     );
-  });
-
-  describe('should set reviews reviewed', async () => {
-    it('successfully', async () => {
-      vi.mocked(homeAssistantWSRequest).mockResolvedValue({
-        success: true,
-        message: 'success',
-      });
-
-      const hass = createHASS();
-      setReviewsReviewed(hass, 'clientID', ['review_id'], true);
-
-      expect(homeAssistantWSRequest).toHaveBeenCalledWith(
-        hass,
-        reviewResultSchema,
-        expect.objectContaining({
-          type: 'frigate/reviews/viewed',
-          instance_id: 'clientID',
-          ids: ['review_id'],
-          viewed: true,
-        }),
-      );
-    });
-
-    it('unsuccessfully', async () => {
-      vi.mocked(homeAssistantWSRequest).mockResolvedValue({
-        success: false,
-        message: 'failed',
-      });
-
-      const hass = createHASS();
-      await expect(
-        setReviewsReviewed(hass, 'clientID', ['review_id'], true),
-      ).rejects.toThrow(/Failed to receive response from Home Assistant/);
-      expect(homeAssistantWSRequest).toHaveBeenCalledWith(
-        hass,
-        reviewResultSchema,
-        expect.objectContaining({
-          type: 'frigate/reviews/viewed',
-          instance_id: 'clientID',
-          ids: ['review_id'],
-          viewed: true,
-        }),
-      );
-    });
   });
 });

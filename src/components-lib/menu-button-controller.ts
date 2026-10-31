@@ -29,7 +29,6 @@ import {
   createMediaPlayerAction,
   createPTZControlsAction,
   createPTZMultiAction,
-  createSetReviewAction,
   createSubstreamOffAction,
   createSubstreamOnAction,
   createViewAction,
@@ -102,7 +101,6 @@ export class MenuButtonController {
       this._getTimelineButton(config, cameraManager, foldersManager, options?.view),
       this._getDownloadButton(config, options?.viewItemManager, options?.view),
       this._getInfoButton(config, cameraManager, options?.view),
-      this._getSetReviewButton(config, options?.view),
       this._getCameraUIButton(config, options?.showCameraUIButton),
       this._getCallButton(config, cameraManager, options?.callManager, options?.view),
       this._getMicrophoneButton(
@@ -481,34 +479,6 @@ export class MenuButtonController {
       type: 'custom:advanced-camera-card-menu-icon',
       title: localize('config.menu.buttons.info'),
       tap_action: createGeneralAction('info'),
-    };
-  }
-
-  private _getSetReviewButton(
-    config: AdvancedCameraCardConfig,
-    view?: View | null,
-  ): MenuItem | null {
-    const selectedItem = view?.queryResults?.getSelectedResult();
-    if (!view?.isViewerView() || !ViewItemClassifier.isReview(selectedItem)) {
-      return null;
-    }
-    const isReviewed = selectedItem.isReviewed();
-    if (isReviewed === null) {
-      return null;
-    }
-
-    return {
-      icon: isReviewed ? 'mdi:check-circle' : 'mdi:check-circle-outline',
-      ...config.menu.buttons.set_review,
-      type: 'custom:advanced-camera-card-menu-icon',
-      title: isReviewed
-        ? localize('common.set_reviews.unreviewed')
-        : localize('common.set_reviews.reviewed'),
-      tap_action: createSetReviewAction(),
-      style: this._getStyle(
-        config.menu.buttons.set_review,
-        isReviewed ? this._getEmphasizedStyle() : undefined,
-      ),
     };
   }
 

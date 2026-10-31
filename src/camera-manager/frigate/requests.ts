@@ -11,14 +11,12 @@ import {
   recordingSegmentsSchema,
   recordingSummarySchema,
   retainResultSchema,
-  reviewResultSchema,
   type EventSummary,
   type FrigateEvent,
   type FrigateReview,
   type PTZInfo,
   type RecordingSummary,
   type RetainResult,
-  type ReviewResult,
 } from './types';
 
 /**
@@ -213,33 +211,4 @@ export const getReviews = async (
     },
     true,
   );
-};
-
-export const setReviewsReviewed = async (
-  hass: HomeAssistant,
-  instance_id: string,
-  ids: string[],
-  reviewed?: boolean,
-): Promise<void> => {
-  const request = {
-    type: 'frigate/reviews/viewed',
-    instance_id,
-    ids,
-
-    // Frigate uses 'viewed' to mean the review has been reviewed.
-    ...(reviewed !== undefined && { viewed: reviewed }),
-  };
-
-  const response = await homeAssistantWSRequest<ReviewResult>(
-    hass,
-    reviewResultSchema,
-    request,
-  );
-
-  if (!response.success) {
-    throw new AdvancedCameraCardError(localize('error.failed_response'), {
-      request: request,
-      response: response,
-    });
-  }
 };

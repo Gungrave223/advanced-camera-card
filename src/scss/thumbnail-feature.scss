@@ -118,18 +118,13 @@ advanced-camera-card-icon:not(.placeholder):not(.background):hover {
   color: var(--advanced-camera-card-active-color);
 }
 
-advanced-camera-card-icon.star,
-advanced-camera-card-icon.review {
+advanced-camera-card-icon.star {
   top: 2px;
   left: 2px;
 }
 
 advanced-camera-card-icon.star.starred {
   color: var(--advanced-camera-card-thumbnail-icon-favorite-color);
-}
-
-advanced-camera-card-icon.review.reviewed {
-  color: var(--advanced-camera-card-thumbnail-icon-review-color);
 }
 
 advanced-camera-card-icon.timeline {

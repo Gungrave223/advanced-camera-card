@@ -68,7 +68,6 @@ import {
   getRecordingsSummary,
   getReviews,
   retainEvent,
-  setReviewsReviewed,
   type NativeFrigateEventQuery,
   type NativeFrigateRecordingSegmentsQuery,
 } from './requests';
@@ -352,27 +351,6 @@ export class FrigateCameraManagerEngine
 
     await retainEvent(hass, cameraConfig.frigate.client_id, media.getID(), favorite);
     media.setFavorite(favorite);
-  }
-
-  public async reviewMedia(
-    hass: HomeAssistant,
-    cameraConfig: CameraConfig,
-    media: ViewMedia,
-    reviewed: boolean,
-  ): Promise<void> {
-    if (
-      !FrigateViewMediaClassifier.isFrigateReview(media) ||
-      !cameraConfig.frigate.client_id
-    ) {
-      return;
-    }
-
-    await setReviewsReviewed(
-      hass,
-      cameraConfig.frigate.client_id,
-      [media.getID()],
-      reviewed,
-    );
   }
 
   private _buildInstanceToCameraIDMapFromQuery(

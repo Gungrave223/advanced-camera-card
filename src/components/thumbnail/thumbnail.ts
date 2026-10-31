@@ -52,13 +52,7 @@ export class AdvancedCameraCardThumbnail extends LitElement {
   public show_download_control = false;
 
   @property({ attribute: true, type: Boolean })
-  public show_review_control = false;
-
-  @property({ attribute: true, type: Boolean })
   public show_info_control = false;
-
-  @property({ attribute: false })
-  public filterReviewed?: boolean;
 
   @property({ attribute: false })
   public seek?: Date;
@@ -83,9 +77,7 @@ export class AdvancedCameraCardThumbnail extends LitElement {
         .show_favorite_control=${this.show_favorite_control}
         .show_timeline_control=${this.show_timeline_control}
         .show_download_control=${this.show_download_control}
-        .show_review_control=${this.show_review_control}
         .show_info_control=${this.show_info_control}
-        .filterReviewed=${this.filterReviewed}
       >
       </advanced-camera-card-thumbnail-feature>
       ${this.details

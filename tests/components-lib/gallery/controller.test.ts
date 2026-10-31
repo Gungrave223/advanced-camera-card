@@ -29,7 +29,6 @@ const createThumbnailConfig = (
   show_favorite_control: true,
   show_timeline_control: true,
   show_download_control: true,
-  show_review_control: true,
   show_info_control: true,
   ...config,
 });

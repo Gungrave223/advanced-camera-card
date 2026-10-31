@@ -419,50 +419,37 @@ describe('MediaNotificationController', () => {
       const notification = controller.getNotification(context);
       const controls = notification.controls;
       assert(controls);
-      expect(controls).toHaveLength(4);
+      expect(controls).toHaveLength(3);
 
-      // 1. Review control
-      expect(controls?.[0].tooltip).toBe('Mark as reviewed');
+      // 1. Favorite control
+      expect(controls?.[0].tooltip).toBe('Retain media indefinitely');
       expect(controls?.[0].dismiss).toBe(false);
       await executeControlAction(controls[0], cardAPI);
       expect(cardAPI.getNotificationManager().setNotification).toHaveBeenCalled();
 
-      // 1b. Review control (failure)
+      // 1b. Favorite control (failure)
       vi.mocked(cardAPI.getNotificationManager().setNotification).mockClear();
-      viewItemManager.reviewMedia.mockRejectedValue(new Error('fail'));
+      viewItemManager.favorite.mockRejectedValue(new Error('fail'));
       await executeControlAction(controls[0], cardAPI);
       expect(cardAPI.getNotificationManager().setNotification).not.toHaveBeenCalled();
 
-      // 2. Favorite control
-      expect(controls?.[1].tooltip).toBe('Retain media indefinitely');
-      expect(controls?.[1].dismiss).toBe(false);
-      await executeControlAction(controls[1], cardAPI);
-      expect(cardAPI.getNotificationManager().setNotification).toHaveBeenCalled();
-
-      // 2b. Favorite control (failure)
-      vi.mocked(cardAPI.getNotificationManager().setNotification).mockClear();
-      viewItemManager.favorite.mockRejectedValue(new Error('fail'));
-      await executeControlAction(controls[1], cardAPI);
-      expect(cardAPI.getNotificationManager().setNotification).not.toHaveBeenCalled();
-
-      // 3. Download control
-      expect(controls?.[2].tooltip).toBe('Download media');
-      expect(controls?.[2].dismiss).toBe(true);
+      // 2. Download control
+      expect(controls?.[1].tooltip).toBe('Download media');
+      expect(controls?.[1].dismiss).toBe(true);
       vi.mocked(downloadMedia).mockResolvedValue(true);
-      await executeControlAction(controls[2], cardAPI);
+      await executeControlAction(controls[1], cardAPI);
       expect(downloadMedia).toHaveBeenCalledWith(item, viewItemManager);
 
-      // 4. Timeline control
-      expect(controls?.[3].tooltip).toBe('See media in timeline');
-      expect(controls?.[3].dismiss).toBe(true);
-      await executeControlAction(controls[3], cardAPI);
+      // 3. Timeline control
+      expect(controls?.[2].tooltip).toBe('See media in timeline');
+      expect(controls?.[2].dismiss).toBe(true);
+      await executeControlAction(controls[2], cardAPI);
       expect(navigateToTimeline).toHaveBeenCalledWith(item, viewManagerEpoch);
     });
 
-    it('should get notification with controls for already reviewed/favorited items', () => {
+    it('should get notification with controls for already favorited items', () => {
       const item = new TestViewMedia({
         mediaType: ViewMediaType.Review,
-        reviewed: true,
         favorite: true,
       });
       const context = {
@@ -477,13 +464,10 @@ describe('MediaNotificationController', () => {
 
       const notification = controller.getNotification(context);
       const controls = notification.controls;
-      expect(controls).toHaveLength(2);
+      expect(controls).toHaveLength(1);
 
-      expect(controls?.[0].tooltip).toBe('Mark as unreviewed');
-      expect(controls?.[0].icon).toBe('mdi:check-circle');
-
-      expect(controls?.[1].severity).toBe('medium');
-      expect(controls?.[1].icon).toBe('mdi:star');
+      expect(controls?.[0].severity).toBe('medium');
+      expect(controls?.[0].icon).toBe('mdi:star');
     });
 
     it('should get notification with controls when item has no ID', () => {

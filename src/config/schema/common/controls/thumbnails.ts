@@ -11,7 +11,6 @@ export const thumbnailControlsBaseDefaults = {
   show_favorite_control: true,
   show_timeline_control: false,
   show_download_control: false,
-  show_review_control: true,
   show_info_control: true,
 };
 
@@ -32,9 +31,6 @@ export const thumbnailsControlBaseSchema = z.object({
   show_download_control: z
     .boolean()
     .default(thumbnailControlsBaseDefaults.show_download_control),
-  show_review_control: z
-    .boolean()
-    .default(thumbnailControlsBaseDefaults.show_review_control),
   show_info_control: z
     .boolean()
     .default(thumbnailControlsBaseDefaults.show_info_control),

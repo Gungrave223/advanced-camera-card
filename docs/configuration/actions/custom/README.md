@@ -561,22 +561,6 @@ action: custom:advanced-camera-card-action
 advanced_camera_card_action: screenshot
 ```
 
-## `set_review`
-
-Mark a review as reviewed or unreviewed.
-
-```yaml
-action: custom:advanced-camera-card-action
-advanced_camera_card_action: set_review
-# [...]
-```
-
-| Parameter                     | Default | Description                                                                                                               |
-| ----------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `action`                      |         | Must be `custom:advanced-camera-card-action`.                                                                             |
-| `advanced_camera_card_action` |         | Must be `set_review`.                                                                                                     |
-| `reviewed`                    |         | If `true` marks as reviewed, if `false` marks as unreviewed. If not specified (the default), toggles the reviewed status. |
-
 ## `sleep`
 
 Take no action for a given duration. Useful to pause between multiple other actions.
@@ -997,13 +981,6 @@ elements:
     tap_action:
       action: custom:advanced-camera-card-action
       advanced_camera_card_action: snapshots
-  - type: custom:advanced-camera-card-menu-icon
-    icon: mdi:alpha-h-circle-outline
-    title: Set reviewed
-    tap_action:
-      action: custom:advanced-camera-card-action
-      advanced_camera_card_action: set_review
-      reviewed: true
   - type: custom:advanced-camera-card-menu-icon
     icon: mdi:alpha-i-circle-outline
     title: Show timeline

@@ -62,7 +62,6 @@ class AdvancedCameraCardMediaFilter extends ScopedRegistryHost(LitElement) {
   private _refWhat: Ref<AdvancedCameraCardSelect> = createRef();
   private _refWhere: Ref<AdvancedCameraCardSelect> = createRef();
   private _refFavorite: Ref<AdvancedCameraCardSelect> = createRef();
-  private _refReviewed: Ref<AdvancedCameraCardSelect> = createRef();
   private _refSeverity: Ref<AdvancedCameraCardSelect> = createRef();
   private _refTags: Ref<AdvancedCameraCardSelect> = createRef();
 
@@ -120,7 +119,6 @@ class AdvancedCameraCardMediaFilter extends ScopedRegistryHost(LitElement) {
             to: this._refWhenTo.value?.value,
           },
           favorite: this._refFavorite.value?.value ?? undefined,
-          reviewed: this._refReviewed.value?.value ?? undefined,
           where: this._refWhere.value?.value ?? undefined,
           what: this._refWhat.value?.value ?? undefined,
           tags: this._refTags.value?.value ?? undefined,
@@ -253,16 +251,6 @@ class AdvancedCameraCardMediaFilter extends ScopedRegistryHost(LitElement) {
         placeholder=${localize('media_filter.select_favorite')}
         .options=${this._mediaFilterController.getFavoriteOptions()}
         .initialValue=${defaults?.favorite}
-        clearable
-        @advanced-camera-card:select:change=${() => valueChange()}
-      >
-      </advanced-camera-card-select>
-      <advanced-camera-card-select
-        ${ref(this._refReviewed)}
-        label=${localize('media_filter.reviewed')}
-        placeholder=${localize('media_filter.select_reviewed')}
-        .options=${this._mediaFilterController.getReviewedOptions()}
-        .initialValue=${defaults?.reviewed}
         clearable
         @advanced-camera-card:select:change=${() => valueChange()}
       >

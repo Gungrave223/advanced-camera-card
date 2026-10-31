@@ -74,9 +74,6 @@ export class ViewMedia {
   public isFavorite(): boolean | null {
     return null;
   }
-  public isReviewed(): boolean | null {
-    return null;
-  }
   public includesTime(seek: Date): boolean {
     const startTime = this.getStartTime();
     const endTime = this.getUsableEndTime();
@@ -101,7 +98,7 @@ export class ViewMedia {
    *
    * This is needed because Lit components use reference equality (===) to
    * detect property changes. When we mutate an item's state (e.g.,
-   * setReviewed), the reference doesn't change, so Lit doesn't re-render. By
+   * setFavorite), the reference doesn't change, so Lit doesn't re-render. By
    * cloning the item before mutation and replacing it in the QueryResults, we
    * ensure Lit sees a new reference and updates the UI.
    */
@@ -122,8 +119,6 @@ export interface RecordingViewMedia extends ViewMedia {
 
 export interface ReviewViewMedia extends ViewMedia {
   getWhat(): string[] | null;
-  isReviewed(): boolean | null;
-  setReviewed(reviewed: boolean): void;
 }
 
 interface ViewFolderParameters {

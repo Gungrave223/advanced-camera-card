@@ -608,32 +608,6 @@ describe('FrigateReviewViewMedia', () => {
     expect(media.getSeverity()).toBe('medium');
   });
 
-  it('should get reviewed status', () => {
-    const review = createFrigateReview({
-      has_been_reviewed: true,
-    });
-    const media = new FrigateReviewViewMedia(
-      'camera',
-      review,
-      'content_id',
-      'thumb',
-      new Date(),
-    );
-    expect(media.isReviewed()).toBe(true);
-  });
-
-  it('should set reviewed status', () => {
-    const media = new FrigateReviewViewMedia(
-      'camera',
-      createFrigateReview({ has_been_reviewed: false }),
-      'content_id',
-      'thumb',
-      new Date(),
-    );
-    media.setReviewed(true);
-    expect(media.isReviewed()).toBe(true);
-  });
-
   it('should get what from objects', () => {
     const review = createFrigateReview({
       data: { objects: ['person', 'car'], zones: [] },

@@ -30,10 +30,9 @@ import type { HomeAssistant } from '../../ha/types.js';
 import galleryStyle from '../../scss/gallery.scss?inline';
 import { stopEventFromActivatingCardWideActions } from '../../utils/action.js';
 import { ViewItemClassifier } from '../../view/item-classifier.js';
-import type { ViewFolder, ViewItem } from '../../view/item.js';
+import type { ViewFolder } from '../../view/item.js';
 import { UnifiedQueryBuilder } from '../../view/unified-query-builder.js';
 import { UnifiedQueryRunner } from '../../view/unified-query-runner.js';
-import { getReviewedQueryFilterFromQuery } from '../../view/utils/query-filter.js';
 
 import '../media-filter.js';
 
@@ -151,11 +150,8 @@ export class AdvancedCameraCardGallery extends LitElement {
               .show_timeline_control}
             ?show_download_control=${!!this.galleryConfig?.controls.thumbnails
               .show_download_control}
-            ?show_review_control=${!!this.galleryConfig?.controls.thumbnails
-              .show_review_control}
             ?show_info_control=${!!this.galleryConfig?.controls.thumbnails
               .show_info_control}
-            .filterReviewed=${getReviewedQueryFilterFromQuery(view?.query, item)}
             @click=${(ev: Event) => {
               stopEventFromActivatingCardWideActions(ev);
               if (ViewItemClassifier.isMedia(item) && this.viewManagerEpoch) {
@@ -281,8 +277,5 @@ export class AdvancedCameraCardGallery extends LitElement {
 declare global {
   interface HTMLElementTagNameMap {
     'advanced-camera-card-gallery': AdvancedCameraCardGallery;
-  }
-  interface HTMLElementEventMap {
-    'advanced-camera-card:media:reviewed': CustomEvent<ViewItem>;
   }
 }

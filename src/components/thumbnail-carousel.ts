@@ -32,7 +32,6 @@ import { fireAdvancedCameraCardEvent } from '../utils/fire-advanced-camera-card-
 import { ViewItemClassifier } from '../view/item-classifier.js';
 import type { ViewItem, ViewMedia } from '../view/item.js';
 import { UnifiedQueryBuilder } from '../view/unified-query-builder.js';
-import { getReviewedQueryFilterFromQuery } from '../view/utils/query-filter.js';
 
 import './carousel.js';
 import './thumbnail/thumbnail.js';
@@ -144,12 +143,16 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
     return hasUpFolder ? selectedIndex + 1 : selectedIndex;
   }
 
-  private _handleMediaClick(item: ViewMedia): void {
+  private _fireMediaSelect(item: ViewMedia): void {
     fireAdvancedCameraCardEvent<ThumbnailMediaSelect>(
       this,
       'thumbnails-carousel:media-select',
       { media: item },
     );
+  }
+
+  private _handleMediaClick(item: ViewMedia): void {
+    this._fireMediaSelect(item);
     if (this.viewManagerEpoch) {
       navigateToMedia(item, {
         viewManagerEpoch: this.viewManagerEpoch,
@@ -163,7 +166,6 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
     selected: boolean,
     clickCallback: (item: ViewItem, ev: Event) => void,
     seekTarget?: Date,
-    filterReviewed?: boolean,
   ): TemplateResult {
     const classes = {
       embla__slide: true,
@@ -174,7 +176,6 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
       class="${classMap(classes)}"
       .cameraManager=${this.cameraManager}
       .hass=${this.hass}
-      .filterReviewed=${filterReviewed}
       .item=${item}
       .viewManagerEpoch=${this.viewManagerEpoch}
       .viewItemManager=${this.viewItemManager}
@@ -187,7 +188,6 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
       ?show_favorite_control=${this.config?.show_favorite_control}
       ?show_timeline_control=${this.config?.show_timeline_control}
       ?show_download_control=${this.config?.show_download_control}
-      ?show_review_control=${this.config?.show_review_control}
       ?show_info_control=${this.config?.show_info_control}
       @click=${(ev: Event) => clickCallback(item, ev)}
     >
@@ -215,6 +215,7 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
       const clickHandler = (item: ViewItem, ev: Event) => {
         stopEventFromActivatingCardWideActions(ev);
         if (events && ViewItemClassifier.isMedia(item)) {
+          this._fireMediaSelect(item);
           this._recordingEvents.select(item, this.viewManagerEpoch, [
             new RemoveContextViewModifier(['timeline', 'mediaViewer']),
           ]);
@@ -230,7 +231,6 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
           selectedIndex === thumbnails.length,
           clickHandler,
           view?.context?.mediaViewer?.seek,
-          getReviewedQueryFilterFromQuery(view?.query, item),
         ),
       );
     }

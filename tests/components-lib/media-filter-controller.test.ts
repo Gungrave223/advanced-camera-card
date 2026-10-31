@@ -24,7 +24,6 @@ import type { ViewManager } from '../../src/card-controller/view/view-manager';
 import {
   MediaFilterController,
   MediaFilterCoreFavoriteSelection,
-  MediaFilterCoreReviewedSelection,
   MediaFilterCoreWhen,
   MediaFilterMediaType,
   type MediaFilterCoreDefaults,
@@ -281,7 +280,6 @@ const queryDefaultTestCases: Array<[string, UnifiedQuery, MediaFilterCoreDefault
     {
       cameraIDs: ['camera.kitchen'],
       mediaTypes: [MediaFilterMediaType.Reviews],
-      reviewed: MediaFilterCoreReviewedSelection.Reviewed,
     },
   ],
   [
@@ -290,7 +288,6 @@ const queryDefaultTestCases: Array<[string, UnifiedQuery, MediaFilterCoreDefault
     {
       cameraIDs: ['camera.kitchen'],
       mediaTypes: [MediaFilterMediaType.Reviews],
-      reviewed: MediaFilterCoreReviewedSelection.NotReviewed,
     },
   ],
   [
@@ -350,14 +347,6 @@ describe('MediaFilterController', () => {
       expect(controller.getFavoriteOptions()).toEqual([
         { value: MediaFilterCoreFavoriteSelection.Favorite, label: 'Favorite' },
         { value: MediaFilterCoreFavoriteSelection.NotFavorite, label: 'Not Favorite' },
-      ]);
-    });
-
-    it('reviewed', () => {
-      const controller = new MediaFilterController(createLitElement());
-      expect(controller.getReviewedOptions()).toEqual([
-        { value: MediaFilterCoreReviewedSelection.Reviewed, label: 'Reviewed' },
-        { value: MediaFilterCoreReviewedSelection.NotReviewed, label: 'Not Reviewed' },
       ]);
     });
 
@@ -679,7 +668,6 @@ describe('MediaFilterController', () => {
         {
           mediaTypes: [MediaFilterMediaType.Reviews],
           when: {},
-          reviewed: MediaFilterCoreReviewedSelection.NotReviewed,
         },
       );
 
@@ -689,7 +677,6 @@ describe('MediaFilterController', () => {
       expect(nodes).toHaveLength(1);
       expect(nodes?.[0]).toMatchObject({
         type: QueryType.Review,
-        reviewed: false,
       });
     });
 

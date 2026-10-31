@@ -29,7 +29,6 @@ import {
   downloadMedia,
   navigateToTimeline,
   toggleFavorite,
-  toggleReviewed,
 } from '../../../utils/media-actions';
 import type { ViewItem } from '../../../view/item';
 import { ViewItemClassifier } from '../../../view/item-classifier';
@@ -67,13 +66,7 @@ export class AdvancedCameraCardThumbnailFeature extends LitElement {
   public show_download_control = false;
 
   @property({ attribute: true, type: Boolean })
-  public show_review_control = false;
-
-  @property({ attribute: true, type: Boolean })
   public show_info_control = false;
-
-  @property({ attribute: false })
-  public filterReviewed?: boolean;
 
   private _controller = new ThumbnailFeatureController();
 
@@ -91,7 +84,6 @@ export class AdvancedCameraCardThumbnailFeature extends LitElement {
       viewItemManager: this.viewItemManager,
       viewManagerEpoch: this.viewManagerEpoch,
       capabilities: this.item ? this.viewItemManager?.getCapabilities(this.item) : null,
-      filterReviewed: this.filterReviewed,
     };
   }
 
@@ -121,16 +113,6 @@ export class AdvancedCameraCardThumbnailFeature extends LitElement {
       this.hass &&
       this.item.getID() &&
       mediaCapabilities?.canDownload;
-
-    const isReviewed = ViewItemClassifier.isReview(this.item)
-      ? this.item.isReviewed()
-      : null;
-    const shouldShowReviewControl = this.show_review_control && isReviewed !== null;
-
-    const reviewClasses = {
-      review: true,
-      reviewed: !!isReviewed,
-    };
 
     const shouldShowInfoControl =
       this.show_info_control && ViewItemClassifier.isMedia(this.item);
@@ -167,49 +149,21 @@ export class AdvancedCameraCardThumbnailFeature extends LitElement {
               ></advanced-camera-card-icon>`
             : ''}
       </div>
-      ${shouldShowReviewControl
-        ? html`<advanced-camera-card-icon
-            class="${classMap(reviewClasses)}"
-            title=${isReviewed
-              ? localize('common.set_reviews.unreviewed')
-              : localize('common.set_reviews.reviewed')}
+      ${shouldShowFavoriteControl
+        ? html` <advanced-camera-card-icon
+            class="${classMap(starClasses)}"
+            title=${localize('thumbnail.retain_indefinitely')}
             .icon=${{
-              icon: isReviewed ? 'mdi:check-circle' : 'mdi:check-circle-outline',
+              icon: this.item.isFavorite() ? 'mdi:star' : 'mdi:star-outline',
             }}
             @click=${async (ev: Event) => {
               stopEventFromActivatingCardWideActions(ev);
-              if (
-                this.item &&
-                (await toggleReviewed(
-                  this,
-                  this.item,
-                  this.viewItemManager,
-                  this.viewManagerEpoch,
-                  this.filterReviewed,
-                ))
-              ) {
+              if (this.item && (await toggleFavorite(this.item, this.viewItemManager))) {
                 this.requestUpdate();
               }
             }}
           ></advanced-camera-card-icon>`
-        : shouldShowFavoriteControl
-          ? html` <advanced-camera-card-icon
-              class="${classMap(starClasses)}"
-              title=${localize('thumbnail.retain_indefinitely')}
-              .icon=${{
-                icon: this.item.isFavorite() ? 'mdi:star' : 'mdi:star-outline',
-              }}
-              @click=${async (ev: Event) => {
-                stopEventFromActivatingCardWideActions(ev);
-                if (
-                  this.item &&
-                  (await toggleFavorite(this.item, this.viewItemManager))
-                ) {
-                  this.requestUpdate();
-                }
-              }}
-            ></advanced-camera-card-icon>`
-          : ``}
+        : ``}
       ${shouldShowInfoControl
         ? html`<advanced-camera-card-icon
             class="info"

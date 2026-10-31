@@ -12,10 +12,6 @@
     "in_progress": "In progress...",
     "no_media": "No media to display",
     "retry": "Retry",
-    "set_reviews": {
-      "reviewed": "Mark as reviewed",
-      "unreviewed": "Mark as unreviewed"
-    },
     "severities": {
       "high": "High",
       "low": "Low",
@@ -299,7 +295,6 @@
           "show_download_control": "Show download control",
           "show_favorite_control": "Show favorite control",
           "show_info_control": "Show info control",
-          "show_review_control": "Show review control",
           "show_timeline_control": "Show timeline control",
           "size": "Size in pixels"
         },
@@ -575,7 +570,6 @@
         "recordings": "Recordings",
         "reviews": "Reviews",
         "screenshot": "Screenshot",
-        "set_review": "Set review status",
         "snapshots": "Snapshots",
         "state_color": "Color by entity state",
         "style": "CSS style",
@@ -943,12 +937,9 @@
       "snapshots": "Snapshots"
     },
     "not_favorite": "Not Favorite",
-    "not_reviewed": "Not Reviewed",
-    "reviewed": "Reviewed",
     "select_camera": "Select camera...",
     "select_favorite": "Select favorite...",
     "select_media_type": "Select media type...",
-    "select_reviewed": "Select reviewed...",
     "select_severity": "Select severity...",
     "select_tag": "Select tag...",
     "select_what": "Select what...",

@@ -64,12 +64,6 @@ export class ViewItemManager {
     }
   }
 
-  public async reviewMedia(item: ViewItem, reviewed: boolean): Promise<void> {
-    if (ViewItemClassifier.isReview(item)) {
-      return await this._api.getCameraManager().reviewMedia(item, reviewed);
-    }
-  }
-
   private _getMediaSource(item: ViewItem): ViewMediaSource | null {
     if (ViewItemClassifier.isMedia(item) && item.getCameraID()) {
       return ViewMediaSource.Camera;

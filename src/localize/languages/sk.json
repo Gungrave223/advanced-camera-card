@@ -12,10 +12,6 @@
     "in_progress": "Prebieha...",
     "no_media": "Žiadne médiá na zobrazenie",
     "retry": "Skúsiť znova",
-    "set_reviews": {
-      "reviewed": "Označiť ako skontrolované",
-      "unreviewed": "Označiť ako neskontrolované"
-    },
     "severities": {
       "high": "Vysoká",
       "low": "Nízka",
@@ -299,7 +295,6 @@
           "show_download_control": "Zobraziť ovládanie sťahovania",
           "show_favorite_control": "Zobraziť ovládanie obľúbených",
           "show_info_control": "Zobraziť ovládanie informácií",
-          "show_review_control": "Zobraziť ovládanie kontroly",
           "show_timeline_control": "Zobraziť ovládanie časovej osi",
           "size": "Veľkosť v pixeloch"
         },
@@ -575,7 +570,6 @@
         "recordings": "Nahrávky",
         "reviews": "Kontroly",
         "screenshot": "Snímka obrazovky",
-        "set_review": "Nastaviť stav kontroly",
         "snapshots": "Snímky",
         "state_color": "Farba podľa stavu entity",
         "substreams": "Vedľajšie streamy",
@@ -942,12 +936,9 @@
       "snapshots": "Snímky"
     },
     "not_favorite": "Nie je obľúbené",
-    "not_reviewed": "Neskontrolované",
-    "reviewed": "Skontrolované",
     "select_camera": "Vybrať kameru...",
     "select_favorite": "Vybrať obľúbené...",
     "select_media_type": "Vybrať typ médií...",
-    "select_reviewed": "Vybrať stav kontroly...",
     "select_severity": "Vybrať závažnosť...",
     "select_tag": "Vybrať štítok...",
     "select_what": "Vybrať čo...",

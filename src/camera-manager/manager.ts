@@ -692,33 +692,6 @@ export class CameraManager {
     );
   }
 
-  public async reviewMedia(media: ViewMedia, reviewed: boolean): Promise<void> {
-    const cameraConfig = this._store.getCameraConfigForMedia(media);
-    const engine = this._store.getEngineForMedia(media);
-    const hass = this._api.getHASSManager().getHASS();
-
-    if (!cameraConfig || !engine || !hass) {
-      return;
-    }
-
-    const queryStartTime = new Date();
-
-    await this._requestLimit.add(() =>
-      engine.reviewMedia(hass, cameraConfig, media, reviewed),
-    );
-
-    log(
-      this._api.getConfigManager().getCardWideConfig(),
-      'Advanced Camera Card CameraManager review media request (',
-      `Duration: ${(new Date().getTime() - queryStartTime.getTime()) / 1000}s,`,
-      'Media:',
-      media.getID(),
-      ', Reviewed:',
-      reviewed,
-      ')',
-    );
-  }
-
   public areMediaQueriesResultsFresh<T extends MediaQuery>(
     resultsTimestamp: Date,
     queries: T[] | null,

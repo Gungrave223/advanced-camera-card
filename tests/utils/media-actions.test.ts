@@ -9,7 +9,6 @@ import {
   downloadMedia,
   navigateToTimeline,
   toggleFavorite,
-  toggleReviewed,
 } from '../../src/utils/media-actions';
 import { ViewMediaType, type ViewItem } from '../../src/view/item';
 import type { QueryResults } from '../../src/view/query-results';
@@ -17,96 +16,6 @@ import type { View } from '../../src/view/view';
 import { TestViewMedia } from '../view/test-utils';
 
 describe('MediaActions', () => {
-  describe('toggleReviewed', () => {
-    it('should return false if item is not review', async () => {
-      const host = mock<HTMLElement>();
-      const item = new TestViewMedia({ mediaType: ViewMediaType.Clip });
-      const viewItemManager = mock<ViewItemManager>();
-
-      expect(await toggleReviewed(host, item, viewItemManager)).toBe(false);
-      expect(host.dispatchEvent).not.toHaveBeenCalled();
-    });
-
-    it('should return false if manager is missing', async () => {
-      const host = mock<HTMLElement>();
-      const item = new TestViewMedia({ mediaType: ViewMediaType.Review });
-
-      expect(await toggleReviewed(host, item)).toBe(false);
-    });
-
-    it('should toggle review status and update view', async () => {
-      const host = mock<HTMLElement>();
-      const item = new TestViewMedia({
-        mediaType: ViewMediaType.Review,
-        reviewed: false,
-      });
-      const viewItemManager = mock<ViewItemManager>();
-      const viewManagerEpoch = mock<ViewManagerEpoch>();
-      const viewManager = mock<ViewManager>();
-      const view = mock<View>();
-      const queryResults = mock<QueryResults>();
-
-      viewManagerEpoch.manager = viewManager;
-      viewManager.getView.mockReturnValue(view);
-      view.queryResults = queryResults;
-      queryResults.clone.mockReturnValue(queryResults);
-      queryResults.removeItem.mockReturnValue(queryResults);
-
-      expect(
-        await toggleReviewed(host, item, viewItemManager, viewManagerEpoch, false),
-      ).toBe(true);
-      expect(viewItemManager.reviewMedia).toHaveBeenCalledWith(item, true);
-      expect(item.isReviewed()).toBe(true);
-      expect(viewManager.setViewByParameters).toHaveBeenCalled();
-      expect(host.dispatchEvent).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'advanced-camera-card:media:reviewed',
-          detail: item,
-        }),
-      );
-    });
-
-    it('should not update view if queryResults is missing', async () => {
-      const host = mock<HTMLElement>();
-      const item = new TestViewMedia({
-        mediaType: ViewMediaType.Review,
-        reviewed: false,
-      });
-      const viewItemManager = mock<ViewItemManager>();
-      const viewManagerEpoch = mock<ViewManagerEpoch>();
-      const viewManager = mock<ViewManager>();
-      const view = mock<View>();
-
-      viewManagerEpoch.manager = viewManager;
-      viewManager.getView.mockReturnValue(view);
-      view.queryResults = null;
-
-      expect(
-        await toggleReviewed(host, item, viewItemManager, viewManagerEpoch, false),
-      ).toBe(true);
-      expect(viewManager.setViewByParameters).not.toHaveBeenCalled();
-    });
-
-    it('should handle manager error', async () => {
-      const host = mock<HTMLElement>();
-      const item = new TestViewMedia({
-        mediaType: ViewMediaType.Review,
-        reviewed: false,
-      });
-      const viewItemManager = mock<ViewItemManager>();
-      const error = new Error('fail');
-      viewItemManager.reviewMedia.mockRejectedValue(error);
-
-      const consoleSpy = vi.spyOn(console, 'warn');
-
-      expect(await toggleReviewed(host, item, viewItemManager)).toBe(false);
-      expect(consoleSpy).toHaveBeenCalledWith(error.message);
-      expect(host.dispatchEvent).not.toHaveBeenCalled();
-
-      consoleSpy.mockRestore();
-    });
-  });
-
   describe('toggleFavorite', () => {
     it('should return false if item is not media', async () => {
       const viewItemManager = mock<ViewItemManager>();

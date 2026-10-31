@@ -38,7 +38,6 @@ export const MENU_BUTTONS = [
   'recordings',
   'reviews',
   'screenshot',
-  'set_review',
   'snapshots',
   'substreams',
   'timeline',

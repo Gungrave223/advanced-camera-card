@@ -35,7 +35,6 @@ import type {
   PTZActionConfig,
   PTZActionPhase,
 } from '../config/schema/actions/custom/ptz.js';
-import type { SetReviewActionConfig } from '../config/schema/actions/custom/set-review.js';
 import type { SubstreamOffActionConfig } from '../config/schema/actions/custom/substream-off.js';
 import type { SubstreamOnActionConfig } from '../config/schema/actions/custom/substream-on.js';
 import type { ViewActionConfig } from '../config/schema/actions/custom/view.js';
@@ -312,14 +311,6 @@ export function createEffectAction(
     effect: effectName,
     effect_action: effectAction,
     ...(options?.cardID && { card_id: options.cardID }),
-  };
-}
-
-export function createSetReviewAction(reviewed?: boolean): SetReviewActionConfig {
-  return {
-    action: 'fire-dom-event',
-    advanced_camera_card_action: 'set_review',
-    reviewed,
   };
 }
 

@@ -31,7 +31,6 @@ export class TestViewMedia extends ViewMedia implements EventViewMedia, ReviewVi
   private _tags: string[] | null = null;
   private _where: string[] | null = null;
   private _severity: Severity | null = null;
-  private _reviewed: boolean | null = null;
   private _description: string | null = null;
   private _favorite: boolean | null = null;
 
@@ -53,7 +52,6 @@ export class TestViewMedia extends ViewMedia implements EventViewMedia, ReviewVi
     tags?: string[] | null;
     where?: string[] | null;
     severity?: Severity | null;
-    reviewed?: boolean | null;
     favorite?: boolean | null;
   }) {
     super(options?.mediaType ?? ViewMediaType.Clip, {
@@ -75,7 +73,6 @@ export class TestViewMedia extends ViewMedia implements EventViewMedia, ReviewVi
     this._tags = options?.tags !== undefined ? options.tags : null;
     this._where = options?.where !== undefined ? options.where : null;
     this._severity = options?.severity !== undefined ? options.severity : null;
-    this._reviewed = options?.reviewed !== undefined ? options.reviewed : null;
     this._favorite = options?.favorite !== undefined ? options.favorite : null;
   }
   public getIcon(): string | null {
@@ -119,12 +116,6 @@ export class TestViewMedia extends ViewMedia implements EventViewMedia, ReviewVi
   }
   public getSeverity(): Severity | null {
     return this._severity;
-  }
-  public isReviewed(): boolean | null {
-    return this._reviewed;
-  }
-  public setReviewed(reviewed: boolean): void {
-    this._reviewed = reviewed;
   }
   public isFavorite(): boolean | null {
     return this._favorite;

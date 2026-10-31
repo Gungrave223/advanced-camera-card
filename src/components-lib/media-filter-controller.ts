@@ -34,7 +34,6 @@ import { UnifiedQueryBuilder } from '../view/unified-query-builder';
 export interface MediaFilterCoreDefaults {
   cameraIDs?: string[];
   favorite?: MediaFilterCoreFavoriteSelection;
-  reviewed?: MediaFilterCoreReviewedSelection;
   mediaTypes?: MediaFilterMediaType[];
   what?: string[];
   when?: string;
@@ -46,11 +45,6 @@ export interface MediaFilterCoreDefaults {
 export enum MediaFilterCoreFavoriteSelection {
   Favorite = 'favorite',
   NotFavorite = 'not-favorite',
-}
-
-export enum MediaFilterCoreReviewedSelection {
-  Reviewed = 'reviewed',
-  NotReviewed = 'not-reviewed',
 }
 
 export enum MediaFilterCoreWhen {
@@ -82,7 +76,6 @@ export class MediaFilterController {
   private _whereOptions: SelectOption[] = [];
   private _tagsOptions: SelectOption[] = [];
   private _favoriteOptions: SelectOption[];
-  private _reviewedOptions: SelectOption[];
   private _severityOptions: SelectOption[];
 
   private _defaults: MediaFilterCoreDefaults | null = null;
@@ -117,16 +110,6 @@ export class MediaFilterController {
       {
         value: MediaFilterMediaType.Reviews,
         label: localize('media_filter.media_types.reviews'),
-      },
-    ];
-    this._reviewedOptions = [
-      {
-        value: MediaFilterCoreReviewedSelection.Reviewed,
-        label: localize('media_filter.reviewed'),
-      },
-      {
-        value: MediaFilterCoreReviewedSelection.NotReviewed,
-        label: localize('media_filter.not_reviewed'),
       },
     ];
     this._severityOptions = SEVERITIES.map((severity) => ({
@@ -179,9 +162,6 @@ export class MediaFilterController {
   public getFavoriteOptions(): SelectOption[] {
     return this._favoriteOptions;
   }
-  public getReviewedOptions(): SelectOption[] {
-    return this._reviewedOptions;
-  }
   public getSeverityOptions(): SelectOption[] {
     return this._severityOptions;
   }
@@ -205,7 +185,6 @@ export class MediaFilterController {
         to?: Date | null;
       };
       favorite?: SelectValues;
-      reviewed?: SelectValues;
       where?: SelectValues;
       what?: SelectValues;
       tags?: SelectValues;
@@ -227,9 +206,6 @@ export class MediaFilterController {
     const favorite = values.favorite
       ? values.favorite === MediaFilterCoreFavoriteSelection.Favorite
       : null;
-    const reviewed = values.reviewed
-      ? values.reviewed === MediaFilterCoreReviewedSelection.Reviewed
-      : null;
     const where = getArrayValueAsSet(values.where);
     const what = getArrayValueAsSet(values.what);
     const tags = getArrayValueAsSet(values.tags);
@@ -245,7 +221,6 @@ export class MediaFilterController {
         ...(when?.end && { end: when.end }),
         ...(limit && { limit }),
         ...(favorite !== null && { favorite }),
-        ...(reviewed !== null && { reviewed }),
         ...(tags && { tags }),
         ...(what && { what }),
         ...(where && { where }),
@@ -292,7 +267,6 @@ export class MediaFilterController {
     let what: string[] | undefined;
     let where: string[] | undefined;
     let favorite: MediaFilterCoreFavoriteSelection | undefined;
-    let reviewed: MediaFilterCoreReviewedSelection | undefined;
     let tags: string[] | undefined;
     let severity: Severity[] | undefined;
 
@@ -356,18 +330,7 @@ export class MediaFilterController {
       tags = [...tagsSets[0]];
     }
 
-    // Extract reviewed from review queries (only if explicitly set to true/false)
     const reviewQueries = query.getMediaQueries<ReviewQuery>({ type: QueryType.Review });
-    const reviewedValues = new Set(reviewQueries.map((q) => q.reviewed));
-    if (reviewedValues.size === 1) {
-      const rev = [...reviewedValues][0];
-      if (rev !== undefined) {
-        reviewed = rev
-          ? MediaFilterCoreReviewedSelection.Reviewed
-          : MediaFilterCoreReviewedSelection.NotReviewed;
-      }
-    }
-
     const severitySets = reviewQueries.map((q) => q.severity);
     if (this._hasSingleUniqueValue(severitySets) && severitySets[0]?.size) {
       severity = [...severitySets[0]];
@@ -379,7 +342,6 @@ export class MediaFilterController {
       ...(what && { what }),
       ...(where && { where }),
       ...(favorite !== undefined && { favorite }),
-      ...(reviewed !== undefined && { reviewed }),
       ...(tags && { tags }),
       ...(severity && { severity }),
     };

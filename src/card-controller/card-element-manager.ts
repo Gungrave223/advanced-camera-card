@@ -5,8 +5,6 @@ import { isCardInPanel } from '../ha/panel';
 import type { LovelaceCard } from '../ha/types';
 import { isBeingCasted } from '../utils/casting';
 import { isAncestorInEventPath } from '../utils/event-ancestor';
-import type { CardMediaReviewEventTarget } from '../utils/review';
-import type { ViewItem } from '../view/item';
 import type { ActionExecutionRequestEventTarget } from './actions/utils/execution-request';
 import { InitializationAspect } from './initialization/initialization-manager';
 import type { CardElementAPI } from './types';
@@ -18,8 +16,7 @@ export type CardHTMLElement = LovelaceCard &
   LitElement &
   ReactiveControllerHost &
   ActionEventTarget &
-  ActionExecutionRequestEventTarget &
-  CardMediaReviewEventTarget;
+  ActionExecutionRequestEventTarget;
 
 export class CardElementManager {
   private _api: CardElementAPI;
@@ -136,10 +133,6 @@ export class CardElementManager {
       'advanced-camera-card:action:execution-request',
       this._api.getActionsManager().handleActionExecutionRequestEvent,
     );
-    this._element.addEventListener(
-      'advanced-camera-card:media:reviewed',
-      this._handleMediaReviewed,
-    );
 
     // Listen for HA `navigate` actions.
     // See: https://github.com/home-assistant/frontend/blob/273992c8e9c3062c6e49481b6d7d688a07067232/src/common/navigate.ts#L43
@@ -243,10 +236,6 @@ export class CardElementManager {
       'advanced-camera-card:action:execution-request',
       this._api.getActionsManager().handleActionExecutionRequestEvent,
     );
-    this._element.removeEventListener(
-      'advanced-camera-card:media:reviewed',
-      this._handleMediaReviewed,
-    );
 
     window.removeEventListener(
       'location-changed',
@@ -261,25 +250,6 @@ export class CardElementManager {
       this._editorDiagnosticsHandler,
     );
   }
-
-  private _handleMediaReviewed = (ev: CustomEvent<ViewItem>): void => {
-    this._api
-      .getEffectsManager()
-      .startEffect('check', {
-        duration: 0.4,
-        fadeIn: false,
-      })
-      .catch(() => {});
-
-    // If the selected media item has a change of review status, update the card
-    // (e.g. for the menu).
-    if (
-      this._api.getViewManager().getView()?.queryResults?.getSelectedResult() ===
-      ev.detail
-    ) {
-      this.update();
-    }
-  };
 
   protected _editorDiagnosticsHandler = (ev: Event): void => {
     const toggleDiagnostics = (): void => {
