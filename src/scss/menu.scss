@@ -49,6 +49,13 @@ div.matching {
 div.opposing {
   justify-content: flex-end;
 }
+// Center a top menu. The divs would otherwise grow to fill the menu, from their
+// inline flex style, leaving nothing for the host to center.
+:host([data-position='top']) div.matching,
+:host([data-position='top']) div.opposing {
+  flex: 0 1 auto !important;
+  justify-content: center;
+}
 
 /********************************************************
  * Hack: Ensure host & div expand for column flex layouts
