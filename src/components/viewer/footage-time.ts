@@ -92,7 +92,7 @@ export class AdvancedCameraCardViewerFootageTime extends LitElement {
 
   protected render(): TemplateResult | void {
     return html`${this._labels.length
-      ? html`<div class="labels">${this._labels.join(' · ')}</div>`
+      ? html`<div class="labels">${this._labels.join(' • ')}</div>`
       : ''}
     ${this._time
       ? html`<div class="time">${format(this._time, 'EEE, MMM d, h:mm:ss a')}</div>`
@@ -103,13 +103,11 @@ export class AdvancedCameraCardViewerFootageTime extends LitElement {
     return css`
       :host {
         position: absolute;
-        top: 56px;
+        top: 0;
+        bottom: 0;
         left: 8px;
         right: 8px;
         z-index: 3;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
         pointer-events: none;
         white-space: nowrap;
         font-size: 14px;
@@ -117,16 +115,21 @@ export class AdvancedCameraCardViewerFootageTime extends LitElement {
         color: white;
       }
       div {
+        position: absolute;
         padding: 4px 10px;
         border-radius: 6px;
         background: rgba(0, 0, 0, 0.65);
       }
+      /* Above the back to live button, with some space between them. */
       .labels {
-        align-self: center;
+        bottom: 72px;
+        left: 50%;
+        transform: translateX(-50%);
         text-transform: capitalize;
       }
       .time {
-        align-self: flex-end;
+        top: 56px;
+        right: 0;
       }
     `;
   }

@@ -4,12 +4,12 @@ import type { CameraManager } from '../../camera-manager/manager';
 import type { ViewMedia } from '../../view/item';
 import { ViewItemClassifier } from '../../view/item-classifier';
 
-const EVENTS_LIMIT = 200;
-const EVENTS_MAX_AGE_SECONDS = 60;
+const REVIEWS_LIMIT = 200;
+const REVIEWS_MAX_AGE_SECONDS = 60;
 
-// Events are matched by the time they started, so look far enough back to find
-// an event that began before the hour being watched.
-const EVENTS_LOOKBACK_MINUTES = 10;
+// Reviews are matched by the time they started, so look far enough back to find
+// one that began before the hour being watched.
+const REVIEWS_LOOKBACK_MINUTES = 10;
 
 const getLabels = (items: ViewMedia[]): string[] => [
   ...new Set(
@@ -25,11 +25,12 @@ const getLabels = (items: ViewMedia[]): string[] => [
 
 /**
  * Gets what an event in the viewer is tagged as. Recordings have no labels of
- * their own, so those use the events happening at the time being watched.
+ * their own, so those use the reviews at the time being watched: a review has all
+ * the objects seen together, where each event has only one.
  */
 export class EventLabelProvider {
-  private _events: Promise<ViewMedia[]> | null = null;
-  private _eventsKey: string | null = null;
+  private _reviews: Promise<ViewMedia[]> | null = null;
+  private _reviewsKey: string | null = null;
   private _loadedAt: Date | null = null;
 
   public async getLabels(
@@ -44,11 +45,11 @@ export class EventLabelProvider {
     if (!time || !cameraID) {
       return [];
     }
-    const events = await this._getEvents(cameraID, time, cameraManager);
-    return getLabels(events.filter((event) => event.includesTime(time)));
+    const reviews = await this._getReviews(cameraID, time, cameraManager);
+    return getLabels(reviews.filter((review) => review.includesTime(time)));
   }
 
-  private _getEvents(
+  private _getReviews(
     cameraID: string,
     time: Date,
     cameraManager: CameraManager,
@@ -58,28 +59,28 @@ export class EventLabelProvider {
     const now = new Date();
 
     if (
-      !this._events ||
-      key !== this._eventsKey ||
+      !this._reviews ||
+      key !== this._reviewsKey ||
       !this._loadedAt ||
-      now >= add(this._loadedAt, { seconds: EVENTS_MAX_AGE_SECONDS })
+      now >= add(this._loadedAt, { seconds: REVIEWS_MAX_AGE_SECONDS })
     ) {
-      this._eventsKey = key;
+      this._reviewsKey = key;
       this._loadedAt = now;
-      this._events = this._fetchEvents(cameraID, start, time, cameraManager);
+      this._reviews = this._fetchReviews(cameraID, start, time, cameraManager);
     }
-    return this._events;
+    return this._reviews;
   }
 
-  private async _fetchEvents(
+  private async _fetchReviews(
     cameraID: string,
     start: Date,
     time: Date,
     cameraManager: CameraManager,
   ): Promise<ViewMedia[]> {
-    const queries = cameraManager.generateDefaultEventQueries(cameraID, {
-      start: sub(start, { minutes: EVENTS_LOOKBACK_MINUTES }),
+    const queries = cameraManager.generateDefaultReviewQueries(cameraID, {
+      start: sub(start, { minutes: REVIEWS_LOOKBACK_MINUTES }),
       end: endOfHour(time),
-      limit: EVENTS_LIMIT,
+      limit: REVIEWS_LIMIT,
     });
     try {
       return (queries && (await cameraManager.executeMediaQueries(queries))) ?? [];
