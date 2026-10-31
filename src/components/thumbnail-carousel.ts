@@ -140,7 +140,9 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
       return null;
     }
     const hasUpFolder = !!getUpFolderItem(view?.query);
-    return hasUpFolder ? selectedIndex + 1 : selectedIndex;
+    const resultCount = view?.queryResults?.getResults()?.length ?? 0;
+    const displayIndex = resultCount - 1 - selectedIndex;
+    return hasUpFolder ? displayIndex + 1 : displayIndex;
   }
 
   private _fireMediaSelect(item: ViewMedia): void {
@@ -211,7 +213,10 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
 
     const events = this._recordingEvents.getEvents(view);
 
-    for (const item of events ?? view?.queryResults?.getResults() ?? []) {
+    // Thumbnails show the most recent media first (the query results place the
+    // most recent media at the end for use in the viewer).
+    const items = events ?? view?.queryResults?.getResults() ?? [];
+    for (const item of [...items].reverse()) {
       const clickHandler = (item: ViewItem, ev: Event) => {
         stopEventFromActivatingCardWideActions(ev);
         if (events && ViewItemClassifier.isMedia(item)) {

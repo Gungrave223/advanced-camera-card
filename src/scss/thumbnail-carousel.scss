@@ -17,6 +17,10 @@
 
 :host([direction='vertical']) {
   height: 100%;
+
+  // Start the list two thumbnails (and their 5px gaps) down from the top.
+  box-sizing: border-box;
+  padding-top: calc(2 * (var(--advanced-camera-card-thumbnail-size) + 5px));
 }
 :host([direction='horizontal']) {
   // In fullscreen mode, without explicitly setting the height to auto Chrome
