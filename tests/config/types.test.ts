@@ -97,6 +97,7 @@ describe('config defaults', () => {
         auto_unmute: ['microphone', 'call'],
         controls: {
           builtin: true,
+          tap_to_play_pause: false,
           call: {
             button_size: 40,
             enabled: true,
@@ -184,6 +185,8 @@ describe('config defaults', () => {
         auto_unmute: [],
         controls: {
           builtin: true,
+          back_to_live: false,
+          tap_to_play_pause: false,
           next_previous: {
             auto_hide: ['casting'],
             size: 48,

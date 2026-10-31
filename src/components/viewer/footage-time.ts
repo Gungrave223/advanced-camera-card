@@ -1,0 +1,106 @@
+import { format } from 'date-fns';
+import { css, html, LitElement, type CSSResultGroup, type TemplateResult } from 'lit';
+import { customElement, property, state } from 'lit/decorators.js';
+
+import type { CameraManager } from '../../camera-manager/manager.js';
+import { fireAdvancedCameraCardEvent } from '../../utils/fire-advanced-camera-card-event.js';
+import type { ViewMedia } from '../../view/item.js';
+
+const UPDATE_INTERVAL_MS = 500;
+
+/**
+ * Shows the real-world time of the footage currently playing. Players only know
+ * their position in the video, which for hour-long recordings is not the time
+ * the footage was captured.
+ */
+@customElement('advanced-camera-card-viewer-footage-time')
+export class AdvancedCameraCardViewerFootageTime extends LitElement {
+  @property({ attribute: false })
+  public media?: ViewMedia;
+
+  @property({ attribute: false })
+  public cameraManager?: CameraManager;
+
+  @property({ attribute: false })
+  public getPosition?: () => Promise<number | null>;
+
+  @state()
+  private _time: Date | null = null;
+
+  private _timer: number | null = null;
+  private _lastPosition: number | null = null;
+  private _lastMedia: ViewMedia | null = null;
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    this._timer = window.setInterval(() => void this._update(), UPDATE_INTERVAL_MS);
+  }
+
+  disconnectedCallback(): void {
+    if (this._timer !== null) {
+      window.clearInterval(this._timer);
+      this._timer = null;
+    }
+    super.disconnectedCallback();
+  }
+
+  private async _update(): Promise<void> {
+    const media = this.media;
+    const position = (await this.getPosition?.()) ?? null;
+    if (!media || position === null || !this.cameraManager) {
+      this._setTime(null);
+      return;
+    }
+    if (media === this._lastMedia && position === this._lastPosition) {
+      return;
+    }
+    const time = await this.cameraManager.getMediaTimeAtPosition(media, position);
+
+    // The media may have changed while the segments were being fetched.
+    if (media === this.media) {
+      this._lastMedia = media;
+      this._lastPosition = position;
+      this._setTime(time);
+    }
+  }
+
+  private _setTime(time: Date | null): void {
+    if (time?.getTime() !== this._time?.getTime()) {
+      this._time = time;
+      fireAdvancedCameraCardEvent(this, 'media:footage-time', time);
+    }
+  }
+
+  protected render(): TemplateResult | void {
+    if (this._time) {
+      return html`<div>${format(this._time, 'EEE, MMM d, h:mm:ss a')}</div>`;
+    }
+  }
+
+  static get styles(): CSSResultGroup {
+    return css`
+      :host {
+        position: absolute;
+        top: 56px;
+        right: 8px;
+        z-index: 3;
+        pointer-events: none;
+        white-space: nowrap;
+        font-size: 14px;
+        font-variant-numeric: tabular-nums;
+        color: white;
+      }
+      div {
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.65);
+      }
+    `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'advanced-camera-card-viewer-footage-time': AdvancedCameraCardViewerFootageTime;
+  }
+}

@@ -26,6 +26,8 @@ export const setControlsOnVideo = (
     delete video._controlsHideTimer;
     delete video._controlsOriginalValue;
   }
+  // The browser's own fullscreen covers the card's menu and PTZ controls.
+  video.setAttribute('controlslist', 'nofullscreen');
   video.controls = value;
 };
 

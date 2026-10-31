@@ -30,6 +30,8 @@ export const viewerConfigDefault = {
   snapshot_click_plays_clip: true,
   controls: {
     builtin: true,
+    back_to_live: false,
+    tap_to_play_pause: false,
     next_previous: {
       auto_hide: ['casting' as const],
       size: 48,
@@ -94,6 +96,10 @@ export const viewerConfigSchema = z
     controls: z
       .object({
         builtin: z.boolean().default(viewerConfigDefault.controls.builtin),
+        back_to_live: z.boolean().default(viewerConfigDefault.controls.back_to_live),
+        tap_to_play_pause: z
+          .boolean()
+          .default(viewerConfigDefault.controls.tap_to_play_pause),
         next_previous: viewerNextPreviousControlConfigSchema.default(
           viewerConfigDefault.controls.next_previous,
         ),

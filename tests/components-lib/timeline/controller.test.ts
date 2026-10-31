@@ -297,6 +297,125 @@ describe('TimelineController', () => {
     });
   });
 
+  it('should redraw a new timeline after it is created', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      const { timeline } = await createHarness();
+      expect(timeline.redraw).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(1000);
+
+      expect(timeline.redraw).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('should make a hidden timeline visible', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      const { controller } = await createHarness();
+      const element = document.createElement('div');
+      const root = document.createElement('div');
+      root.className = 'vis-timeline';
+      root.style.visibility = 'hidden';
+      element.appendChild(root);
+
+      controller.setTimelineElement(element);
+      vi.advanceTimersByTime(300);
+
+      expect(root.style.visibility).toBe('visible');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('should not redraw a destroyed timeline', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      const { controller, timeline } = await createHarness();
+
+      controller.destroyTimeline();
+      vi.advanceTimersByTime(1000);
+
+      expect(timeline.redraw).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('should reveal a new timeline whose window is already correct', async () => {
+    const { controller, timeline, manager } = await createHarness();
+
+    expect(timeline.setWindow).toHaveBeenCalledTimes(1);
+    expect(timeline.setWindow).toHaveBeenCalledWith(
+      WINDOW.start,
+      add(WINDOW.end, { seconds: 1 }),
+    );
+
+    await controller.setView(mock<ViewManagerEpoch>({ manager: manager }));
+    expect(timeline.setWindow).toHaveBeenCalledTimes(1);
+  });
+
+  describe('should show the position of the footage', () => {
+    const start = WINDOW.start.getTime();
+    const length = WINDOW.end.getTime() - start;
+
+    it('should add then move the playhead', async () => {
+      const { controller, timeline } = await createHarness();
+      const first = new Date(start + length / 2);
+      const second = new Date(start + length / 2 + 1000);
+
+      controller.setPlayhead(first);
+      expect(timeline.addCustomTime).toHaveBeenCalledWith(first, 'playhead');
+      expect(timeline.setCustomTimeMarker).toHaveBeenCalled();
+
+      controller.setPlayhead(second);
+      expect(timeline.addCustomTime).toHaveBeenCalledTimes(1);
+      expect(timeline.setCustomTime).toHaveBeenCalledWith(second, 'playhead');
+      expect(timeline.moveTo).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['start', start + length * 0.05],
+      ['end', start + length * 0.95],
+    ])('should recenter near the %s of the window', async (_name, ms) => {
+      const { controller, timeline } = await createHarness();
+      const time = new Date(ms);
+
+      controller.setPlayhead(time);
+
+      expect(timeline.moveTo).toHaveBeenCalledWith(time, { animation: false });
+    });
+
+    it('should not move the window during a drag', async () => {
+      const { controller, timeline, trigger } = await createHarness();
+      trigger('mouseDown', { time: WINDOW.start });
+
+      controller.setPlayhead(new Date(start + length * 0.95));
+
+      expect(timeline.moveTo).not.toHaveBeenCalled();
+    });
+
+    it('should remove the playhead', async () => {
+      const { controller, timeline } = await createHarness();
+
+      controller.setPlayhead(null);
+      expect(timeline.removeCustomTime).not.toHaveBeenCalled();
+
+      controller.setPlayhead(new Date(start + length / 2));
+      controller.setPlayhead(null);
+      expect(timeline.removeCustomTime).toHaveBeenCalledWith('playhead');
+    });
+
+    it('should ignore the playhead without a timeline', () => {
+      stubMatchMedia().mockReturnValue({ matches: true });
+      const controller = new TimelineController(new TimelineControllerTestHost());
+
+      expect(() => controller.setPlayhead(new Date())).not.toThrow();
+    });
+  });
+
   describe('should set the target bar during a drag', () => {
     // The time the pointer is pressed at. dragTimeline() leaves the window where
     // it was, so the controller places the target bar at this same time.

@@ -34,6 +34,8 @@ media_viewer:
 | Option          | Default | Description                                                                                                         |
 | --------------- | ------- | ------------------------------------------------------------------------------------------------------------------- |
 | `builtin`       | `true`  | Whether to show the built in (browser) video controls on media viewer videos.                                       |
+| `back_to_live` | `false` | Whether to show a button on the video that returns to the live view. |
+| `tap_to_play_pause` | `false` | Whether tapping the video plays or pauses it. |
 | `next_previous` |         | Configures how the "Next & Previous" controls are shown on the media viewer. See [`next_previous`](#next_previous). |
 | `thumbnails`    |         | Configures how thumbnails are shown on the media viewer. See [`thumbnails`](#thumbnails).                           |
 | `timeline`      |         | Configures how the mini-timeline is shown on the media viewer. See [`timeline`](#timeline).                         |

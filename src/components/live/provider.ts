@@ -38,6 +38,7 @@ import { onAbort } from '../../utils/abort-signal.js';
 import { isValidAspectRatio } from '../../utils/basic.js';
 import { fireAdvancedCameraCardEvent } from '../../utils/fire-advanced-camera-card-event.js';
 import { getResolvedLiveProvider } from '../../utils/live-provider.js';
+import { togglePlayback } from '../../utils/playback.js';
 
 import '../icon.js';
 
@@ -146,6 +147,22 @@ export class AdvancedCameraCardLiveProvider extends LitElement implements MediaP
   // call mute() when the <advanced-camera-card-live> element first renders in
   // the background. These calls fail without waiting for loading here.
   private _importPromises: Promise<unknown>[] = [];
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    this.addEventListener('click', this._tapHandler);
+  }
+
+  disconnectedCallback(): void {
+    this.removeEventListener('click', this._tapHandler);
+    super.disconnectedCallback();
+  }
+
+  private _tapHandler = async (): Promise<void> => {
+    if (this.liveConfig?.controls.tap_to_play_pause) {
+      await togglePlayback(await this.getMediaPlayerController());
+    }
+  };
 
   public async getMediaPlayerController(): Promise<MediaPlayerController | null> {
     await this.updateComplete;

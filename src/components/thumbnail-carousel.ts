@@ -30,6 +30,7 @@ import type { CarouselDirection } from '../utils/embla/carousel-controller.js';
 import { fireAdvancedCameraCardEvent } from '../utils/fire-advanced-camera-card-event.js';
 import { ViewItemClassifier } from '../view/item-classifier.js';
 import type { ViewItem, ViewMedia } from '../view/item.js';
+import { RecordingEventsController } from '../components-lib/thumbnail/recording-events-controller.js';
 import { UnifiedQueryBuilder } from '../view/unified-query-builder.js';
 import { getReviewedQueryFilterFromQuery } from '../view/utils/query-filter.js';
 
@@ -71,6 +72,10 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
 
   private _thumbnails: TemplateResult[] = [];
   private _builder: UnifiedQueryBuilder | null = null;
+  private _recordingEvents = new RecordingEventsController(() => {
+    this._thumbnails = this._renderThumbnails();
+    this.requestUpdate();
+  });
 
   private _getFolderNavOptions(): FolderNavigationParamaters | undefined {
     return this._builder && this.viewManagerEpoch
@@ -116,6 +121,11 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
     }
 
     if (changedProps.has('viewManagerEpoch')) {
+      void this._recordingEvents.update(
+        this.viewManagerEpoch?.manager.getView(),
+        this._builder,
+        this.cameraManager,
+      );
       this.style.setProperty(
         '--advanced-camera-card-carousel-thumbnail-opacity',
         !this.fadeThumbnails || this._getSelectedSlide() === null ? '1.0' : '0.4',
@@ -126,7 +136,8 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
   private _getSelectedSlide(): number | null {
     const view = this.viewManagerEpoch?.manager.getView();
     const selectedIndex = view?.queryResults?.getSelectedIndex() ?? null;
-    if (selectedIndex === null) {
+    // The recording that is playing is not one of the events on show.
+    if (selectedIndex === null || this._recordingEvents.getEvents(view)) {
       return null;
     }
     const hasUpFolder = !!getUpFolderItem(view?.query);
@@ -198,10 +209,16 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
     const view = this.viewManagerEpoch?.manager.getView();
     const selectedIndex = this._getSelectedSlide();
 
-    for (const item of view?.queryResults?.getResults() ?? []) {
+    const events = this._recordingEvents.getEvents(view);
+
+    for (const item of events ?? view?.queryResults?.getResults() ?? []) {
       const clickHandler = (item: ViewItem, ev: Event) => {
         stopEventFromActivatingCardWideActions(ev);
-        if (ViewItemClassifier.isMedia(item)) {
+        if (events && ViewItemClassifier.isMedia(item)) {
+          this._recordingEvents.select(item, this.viewManagerEpoch, [
+            new RemoveContextViewModifier(['timeline', 'mediaViewer']),
+          ]);
+        } else if (ViewItemClassifier.isMedia(item)) {
           this._handleMediaClick(item);
         } else if (ViewItemClassifier.isFolder(item)) {
           navigateToFolder(item, this._getFolderNavOptions());

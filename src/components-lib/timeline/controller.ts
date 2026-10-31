@@ -78,6 +78,14 @@ interface TimelineControllerOptions {
 }
 
 const TIMELINE_TARGET_BAR_ID = 'target_bar';
+const TIMELINE_PLAYHEAD_ID = 'playhead';
+
+// How long after creation to make sure a timeline has been revealed.
+const TIMELINE_REVEAL_DELAYS_MS = [300, 1000];
+
+// How close (as a proportion of the window) the playhead may get to either edge
+// of the timeline before the window moves to bring it back to the center.
+const TIMELINE_PLAYHEAD_EDGE_PROPORTION = 0.1;
 
 export class TimelineController {
   private _host: LitElement;
@@ -99,6 +107,9 @@ export class TimelineController {
 
   private _panMode: TimelinePanMode | null = null;
   private _targetBarVisible = false;
+  private _playheadVisible = false;
+  private _hasSetWindow = false;
+  private _revealTimers: number[] = [];
   private _itemClickAction: TimelineItemClickAction = 'play';
 
   private _thumbnailConfig: ThumbnailsControlBaseConfig | null = null;
@@ -127,9 +138,13 @@ export class TimelineController {
   }
 
   public destroyTimeline(): void {
+    this._revealTimers.forEach((timer) => window.clearTimeout(timer));
+    this._revealTimers = [];
     this._timeline?.destroy();
     this._timeline = null;
     this._targetBarVisible = false;
+    this._playheadVisible = false;
+    this._hasSetWindow = false;
     this._pointerHeld = null;
   }
 
@@ -259,6 +274,45 @@ export class TimelineController {
     this._timeline?.moveTo(date);
   }
 
+  public setPlayhead(time: Date | null): void {
+    if (!this._timeline) {
+      return;
+    }
+
+    if (!time) {
+      if (this._playheadVisible) {
+        this._timeline.removeCustomTime(TIMELINE_PLAYHEAD_ID);
+        this._playheadVisible = false;
+      }
+      return;
+    }
+
+    if (this._playheadVisible) {
+      this._timeline.setCustomTime(time, TIMELINE_PLAYHEAD_ID);
+    } else {
+      this._timeline.addCustomTime(time, TIMELINE_PLAYHEAD_ID);
+      this._playheadVisible = true;
+    }
+    this._timeline.setCustomTimeMarker?.(
+      formatDateAndTime(time, true),
+      TIMELINE_PLAYHEAD_ID,
+    );
+
+    // Moving the window while the user drags it would fight the drag.
+    if (!this._pointerHeld) {
+      const window = this._timeline.getWindow();
+      const margin =
+        (window.end.getTime() - window.start.getTime()) *
+        TIMELINE_PLAYHEAD_EDGE_PROPORTION;
+      if (
+        time.getTime() < window.start.getTime() + margin ||
+        time.getTime() > window.end.getTime() - margin
+      ) {
+        this._timeline.moveTo(time, { animation: false });
+      }
+    }
+  }
+
   public shouldSupportSeeking(): boolean {
     return this._mini;
   }
@@ -298,6 +352,18 @@ export class TimelineController {
         options,
       );
     }
+
+    // A timeline created while entering fullscreen may stay invisible until the
+    // next redraw, which nothing else would trigger until the window resizes.
+    this._revealTimers = TIMELINE_REVEAL_DELAYS_MS.map((delay) =>
+      window.setTimeout(() => {
+        const root = this._timelineElement?.querySelector<HTMLElement>('.vis-timeline');
+        if (root) {
+          root.style.visibility = 'visible';
+        }
+        this._timeline?.redraw();
+      }, delay),
+    );
 
     this._timeline.on('rangechanged', this._timelineRangeChangedHandler.bind(this));
     this._timeline.on('click', this._timelineClickHandler.bind(this));
@@ -807,7 +873,16 @@ export class TimelineController {
     // Set the timeline window if necessary.
     if (!this._pointerHeld && !isEqual(desiredWindow, timelineWindow)) {
       this._timeline.setWindow(desiredWindow.start, desiredWindow.end);
+    } else if (!this._pointerHeld && !this._hasSetWindow) {
+      // visjs keeps a timeline created with a start and end invisible until its
+      // range first changes. If the window is already right (e.g. on re-entering
+      // fullscreen) that would never happen, so nudge it.
+      this._timeline.setWindow(
+        desiredWindow.start,
+        add(desiredWindow.end, { seconds: 1 }),
+      );
     }
+    this._hasSetWindow = true;
 
     // Only generate thumbnails if the existing query is not an acceptable
     // match, to avoid getting stuck in a loop (the subsequent fetches will not

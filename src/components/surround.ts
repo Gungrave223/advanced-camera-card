@@ -93,6 +93,10 @@ export class AdvancedCameraCardSurround extends LitElement {
 
     return html` <advanced-camera-card-surround-basic
       .locked=${this.locked}
+      @advanced-camera-card:media:footage-time=${(ev: CustomEvent<Date | null>) =>
+        (ev.currentTarget as HTMLElement)
+          .querySelector('advanced-camera-card-timeline-core')
+          ?.setPlayhead(ev.detail)}
       @advanced-camera-card:thumbnails-carousel:media-select=${(ev: CustomEvent) =>
         changeDrawer(ev, 'close')}
     >

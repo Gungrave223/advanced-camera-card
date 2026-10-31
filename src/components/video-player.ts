@@ -60,6 +60,7 @@ export class AdvancedCameraCardVideoPlayer extends LitElement implements MediaPl
         crossorigin="anonymous"
         ?autoplay=${false}
         ?controls=${this.controls}
+        controlslist="nofullscreen"
         @loadedmetadata=${(ev: Event) => {
           if (ev.target && this.controls) {
             hideMediaControlsTemporarily(

@@ -215,6 +215,16 @@ export class GenericCameraManagerEngine implements CameraManagerEngine {
     return null;
   }
 
+  public async getMediaTimeAtPosition(
+    _hass: HomeAssistant,
+    _store: CameraManagerReadOnlyConfigStore,
+    _media: ViewMedia,
+    _position: number,
+    _engineOptions?: EngineOptions,
+  ): Promise<Date | null> {
+    return null;
+  }
+
   public async getMediaMetadata(
     _hass: HomeAssistant,
     _store: CameraManagerReadOnlyConfigStore,

@@ -22,6 +22,27 @@
   background-color: var(--advanced-camera-card-timeline-background);
 }
 
+:host([mini]) {
+  // In fullscreen the mini-timeline ends at the edge of the screen, where phone
+  // corners and gesture areas cover the date and the tools.
+  --advanced-camera-card-timeline-bottom-inset: max(
+    12px,
+    env(safe-area-inset-bottom, 0px)
+  );
+  padding-bottom: var(--advanced-camera-card-timeline-bottom-inset);
+}
+
+:host([mini]) .timeline-tools {
+  right: 25px;
+  bottom: calc(var(--advanced-camera-card-timeline-bottom-inset) - 8px);
+}
+
+:host([mini]) .vis-text.vis-major {
+  padding-left: 30px;
+  // Lines the date up with the calendar icon.
+  margin-top: -3px;
+}
+
 :host(:not([mini])) {
   // Timeline covers 100% of the parent unless it's in mini-mode.
   height: 100%;
@@ -210,6 +231,23 @@ div.vis-tooltip {
   right: 2px;
 }
 :host([target-bar-marker-direction='center']) .target_bar .vis-custom-time-marker {
+  left: 0px;
+  transform: translateX(-50%);
+}
+
+.playhead {
+  background-color: var(--primary-color);
+  width: 2px;
+
+  z-index: 19;
+
+  // Prevent the mouse interacting with the custom time.
+  pointer-events: none;
+}
+.playhead .vis-custom-time-marker {
+  background-color: var(--primary-color);
+  color: var(--text-primary-color, white);
+  top: 0px;
   left: 0px;
   transform: translateX(-50%);
 }

@@ -42,6 +42,16 @@ div.opposing {
 div.matching {
   justify-content: flex-start;
 }
+:host([data-position='top']) div.matching {
+  padding-left: 25px;
+}
+// Leaves a gap for the front camera cutout at the top of a phone screen. The
+// always-open toolbar has no iris button, so this falls in a consistent place.
+@media (pointer: coarse) and (max-width: 600px) {
+  :host([data-style='overlay'][data-position='top']) div.matching > :nth-child(5) {
+    margin-left: var(--advanced-camera-card-menu-button-size);
+  }
+}
 div.opposing {
   justify-content: flex-end;
 }

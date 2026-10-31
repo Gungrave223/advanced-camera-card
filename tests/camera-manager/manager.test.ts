@@ -1874,6 +1874,47 @@ describe('CameraManager', () => {
     });
   });
 
+  describe('should get the time at a media position', () => {
+    it('should return null without hass', async () => {
+      const api = createCardAPI();
+      const manager = createCameraManager(api, mock<CameraManagerEngine>());
+      await manager.initializeCamerasFromConfig();
+
+      expect(
+        await manager.getMediaTimeAtPosition(new TestViewMedia({ cameraID: 'id' }), 1),
+      ).toBeNull();
+    });
+
+    it('should get the time from the engine', async () => {
+      const api = createCardAPI();
+      const engine = mock<CameraManagerEngine>();
+      vi.mocked(api.getHASSManager().getHASS).mockReturnValue(createHASS());
+      const manager = createCameraManager(api, engine);
+      await manager.initializeCamerasFromConfig();
+
+      const time = new Date('2026-03-14T20:00:04');
+      engine.getMediaTimeAtPosition.mockResolvedValue(time);
+
+      expect(
+        await manager.getMediaTimeAtPosition(new TestViewMedia({ cameraID: 'id' }), 4),
+      ).toBe(time);
+    });
+
+    it('should handle a null time from the engine', async () => {
+      const api = createCardAPI();
+      const engine = mock<CameraManagerEngine>();
+      vi.mocked(api.getHASSManager().getHASS).mockReturnValue(createHASS());
+      const manager = createCameraManager(api, engine);
+      await manager.initializeCamerasFromConfig();
+
+      engine.getMediaTimeAtPosition.mockResolvedValue(null);
+
+      expect(
+        await manager.getMediaTimeAtPosition(new TestViewMedia({ cameraID: 'id' }), 4),
+      ).toBeNull();
+    });
+  });
+
   describe('should get media seek time', () => {
     const startTime = new Date('2024-03-02T20:52:00');
     const endTime = new Date('2024-03-02T20:53:00');

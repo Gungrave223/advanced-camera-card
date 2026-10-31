@@ -96,6 +96,7 @@ void customElements.whenDefined('ha-hls-player').then(() => {
           .muted=${this.muted}
           ?playsinline=${this.playsInline}
           ?controls=${this.controls}
+          controlslist="nofullscreen"
           @loadedmetadata=${() => {
             if (this.controls && this._video) {
               hideMediaControlsTemporarily(

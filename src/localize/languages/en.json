@@ -967,6 +967,7 @@
     "where": "Where"
   },
   "media_viewer": {
+    "back_to_live": "Back to live",
     "unseekable": "Seek time not found in media"
   },
   "thumbnail": {

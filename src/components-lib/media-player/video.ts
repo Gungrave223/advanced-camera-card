@@ -137,6 +137,10 @@ export class VideoMediaPlayerController
     return this._getVideoCallback()?.muted ?? true;
   }
 
+  public getCurrentTime(): number | null {
+    return this._getVideoCallback()?.currentTime ?? null;
+  }
+
   public async seek(seconds: number): Promise<void> {
     await this._host.updateComplete;
 

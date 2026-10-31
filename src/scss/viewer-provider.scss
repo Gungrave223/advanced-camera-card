@@ -1,6 +1,42 @@
 @use 'provider.scss';
 
+:host {
+  // Anchors the footage time to this slide.
+  position: relative;
+}
+
 advanced-camera-card-progress-indicator {
   padding: 30px;
   box-sizing: border-box;
+}
+
+.playback-state {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  padding: 16px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: white;
+  --mdc-icon-size: 48px;
+  // Taps must still reach the video underneath.
+  pointer-events: none;
+}
+
+.back-to-live {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 18px;
+  background: var(--primary-color);
+  color: var(--text-primary-color, white);
+  font-size: 14px;
+  white-space: nowrap;
+  cursor: pointer;
 }

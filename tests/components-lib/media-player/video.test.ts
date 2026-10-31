@@ -204,6 +204,30 @@ describe('VideoMediaPlayerController', () => {
     });
   });
 
+  describe('should get the current time', () => {
+    it('should return the position of the video', () => {
+      const video = mock<HTMLVideoElement>();
+      video.currentTime = 12;
+      const controller = new VideoMediaPlayerController(
+        createLitElement(),
+        () => video,
+        () => false,
+      );
+
+      expect(controller.getCurrentTime()).toBe(12);
+    });
+
+    it('should return null without a video', () => {
+      const controller = new VideoMediaPlayerController(
+        createLitElement(),
+        () => null,
+        () => false,
+      );
+
+      expect(controller.getCurrentTime()).toBeNull();
+    });
+  });
+
   describe('should seek', () => {
     it('should seek', async () => {
       const video = mock<HTMLVideoElement>();

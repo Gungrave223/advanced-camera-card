@@ -148,6 +148,15 @@ export interface CameraManagerEngine {
     engineOptions?: EngineOptions,
   ): Promise<number | null>;
 
+  // The real-world time at a position (in seconds) within the media.
+  getMediaTimeAtPosition(
+    hass: HomeAssistant,
+    store: CameraManagerReadOnlyConfigStore,
+    media: ViewMedia,
+    position: number,
+    engineOptions?: EngineOptions,
+  ): Promise<Date | null>;
+
   getMediaMetadata(
     hass: HomeAssistant,
     store: CameraManagerReadOnlyConfigStore,

@@ -2294,6 +2294,94 @@ describe('FrigateCameraManagerEngine', () => {
     });
   });
 
+  describe('getMediaTimeAtPosition', () => {
+    const at = (time: string): number => new Date(time).getTime() / 1000;
+    const config = createCameraConfig({
+      frigate: { camera_name: 'camera-1', client_id: 'client-1' },
+    });
+    const createRecording = () =>
+      new TestViewMedia({
+        mediaType: ViewMediaType.Recording,
+        cameraID: 'camera-1',
+        startTime: new Date('2026-03-14T20:00:00'),
+        endTime: new Date('2026-03-14T21:00:00'),
+      });
+    const getTime = async (position: number, media = createRecording()) =>
+      await createEngine().getMediaTimeAtPosition(
+        createHASS(),
+        createStore([{ cameraID: 'camera-1', config }]),
+        media,
+        position,
+      );
+
+    it('should skip gaps between segments', async () => {
+      vi.mocked(getRecordingSegments).mockResolvedValue([
+        {
+          start_time: at('2026-03-14T20:05:00'),
+          end_time: at('2026-03-14T20:05:10'),
+          id: 'second',
+        },
+        {
+          start_time: at('2026-03-14T20:00:00'),
+          end_time: at('2026-03-14T20:00:10'),
+          id: 'first',
+        },
+      ]);
+
+      expect(await getTime(4)).toEqual(new Date('2026-03-14T20:00:04'));
+      expect(await getTime(14)).toEqual(new Date('2026-03-14T20:05:04'));
+    });
+
+    it('should not count footage outside of the hour', async () => {
+      vi.mocked(getRecordingSegments).mockResolvedValue([
+        {
+          start_time: at('2026-03-14T19:59:00'),
+          end_time: at('2026-03-14T19:59:30'),
+          id: 'before',
+        },
+        {
+          start_time: at('2026-03-14T19:59:55'),
+          end_time: at('2026-03-14T20:00:05'),
+          id: 'overlapping',
+        },
+      ]);
+
+      expect(await getTime(2)).toEqual(new Date('2026-03-14T20:00:02'));
+    });
+
+    it('should return the end of the footage for positions past it', async () => {
+      vi.mocked(getRecordingSegments).mockResolvedValue([
+        {
+          start_time: at('2026-03-14T20:00:00'),
+          end_time: at('2026-03-14T20:00:10'),
+          id: 'only',
+        },
+      ]);
+
+      expect(await getTime(99)).toEqual(new Date('2026-03-14T20:00:10'));
+    });
+
+    it('should return null without segments', async () => {
+      vi.mocked(getRecordingSegments).mockResolvedValue([]);
+
+      expect(await getTime(1)).toBeNull();
+    });
+
+    it('should return null for media without a time range', async () => {
+      expect(
+        await getTime(
+          1,
+          new TestViewMedia({
+            mediaType: ViewMediaType.Clip,
+            cameraID: 'camera-1',
+            startTime: new Date('2026-03-14T20:00:00'),
+            endTime: null,
+          }),
+        ),
+      ).toBeNull();
+    });
+  });
+
   describe('getMediaSeekTime', () => {
     it('should get seek time for review media', async () => {
       const config = createCameraConfig({

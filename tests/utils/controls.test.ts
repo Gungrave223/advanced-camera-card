@@ -16,6 +16,12 @@ describe('setControlsOnVideo', () => {
     expect(video.controls).toBeFalsy();
   });
 
+  it('should hide the browser fullscreen button', () => {
+    const video = document.createElement('video');
+    setControlsOnVideo(video, true);
+    expect(video.getAttribute('controlslist')).toBe('nofullscreen');
+  });
+
   it('should stop timer', () => {
     const video: AdvancedCameraCardHTMLVideoElement = document.createElement('video');
     hideMediaControlsTemporarily(video);

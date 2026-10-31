@@ -127,6 +127,7 @@ export const liveConfigDefault = {
   show_image_during_load: true,
   controls: {
     builtin: true,
+    tap_to_play_pause: false,
     call: { ...callConfigDefault },
     next_previous: {
       auto_hide: ['call' as const, 'casting' as const],
@@ -164,6 +165,9 @@ export const liveConfigSchema = z
     controls: z
       .object({
         builtin: z.boolean().default(liveConfigDefault.controls.builtin),
+        tap_to_play_pause: z
+          .boolean()
+          .default(liveConfigDefault.controls.tap_to_play_pause),
         call: callConfigSchema.default(liveConfigDefault.controls.call),
         next_previous: nextPreviousControlConfigSchema
           .extend({

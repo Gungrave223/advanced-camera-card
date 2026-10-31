@@ -6,7 +6,7 @@ import {
   type PropertyValues,
   type TemplateResult,
 } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { guard } from 'lit/directives/guard.js';
 import { createRef, ref, type Ref } from 'lit/directives/ref.js';
 
@@ -33,6 +33,8 @@ import type { HomeAssistant } from '../../ha/types.js';
 import '../../patches/ha-hls-player.js';
 
 import viewerProviderStyle from '../../scss/viewer-provider.scss?inline';
+import '../icon.js';
+import './footage-time.js';
 import type {
   MediaPlayer,
   MediaPlayerController,
@@ -42,6 +44,9 @@ import { classifyMimeType } from '../../utils/mime-type.js';
 import { ViewItemClassifier } from '../../view/item-classifier.js';
 import type { ViewMedia } from '../../view/item.js';
 import { UnifiedQueryTransformer } from '../../view/unified-query-transformer.js';
+import { togglePlayback } from '../../utils/playback.js';
+import { localize } from '../../localize/localize.js';
+import { stopEventFromActivatingCardWideActions } from '../../utils/action.js';
 
 import '../image-player.js';
 
@@ -50,6 +55,8 @@ import { renderProgressIndicator } from '../progress-indicator.js';
 
 import '../video-player.js';
 import './../media-dimensions-container';
+
+const PLAYBACK_ICON_RESUME_MS = 800;
 
 @customElement('advanced-camera-card-viewer-provider')
 export class AdvancedCameraCardViewerProvider extends LitElement implements MediaPlayer {
@@ -84,6 +91,16 @@ export class AdvancedCameraCardViewerProvider extends LitElement implements Medi
   public forceSelected = false;
 
   private _refProvider: Ref<MediaPlayerElement> = createRef();
+
+  // Neighboring slides are also loaded, but only the visible one is playing.
+  private _getPosition = async (): Promise<number | null> => {
+    const selected = this.viewManagerEpoch?.manager
+      .getView()
+      ?.queryResults?.getSelectedResult();
+    return selected?.getID() === this.media?.getID()
+      ? (await this.getMediaPlayerController())?.getCurrentTime?.() ?? null
+      : null;
+  };
   private _lazyLoadController: LazyLoadController = new LazyLoadController(this);
 
   // Lit runs controllers in declaration order: Resolve first, then sign.
@@ -122,6 +139,66 @@ export class AdvancedCameraCardViewerProvider extends LitElement implements Medi
       isLoadExpected: () => this._shouldLoad(),
     });
   }
+
+  // Paused stays on screen, as a frozen picture is otherwise easily missed.
+  // Resuming only needs a brief confirmation.
+  @state()
+  private _playbackIcon: 'mdi:play' | 'mdi:pause' | null = null;
+  private _playbackIconTimer: number | null = null;
+
+  private _clearPlaybackIconTimer(): void {
+    if (this._playbackIconTimer !== null) {
+      window.clearTimeout(this._playbackIconTimer);
+      this._playbackIconTimer = null;
+    }
+  }
+
+  private _playHandler = (): void => {
+    this._clearPlaybackIconTimer();
+    if (this._playbackIcon) {
+      this._playbackIcon = 'mdi:pause';
+      this._playbackIconTimer = window.setTimeout(() => {
+        this._playbackIcon = null;
+        this._playbackIconTimer = null;
+      }, PLAYBACK_ICON_RESUME_MS);
+    }
+  };
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    this.addEventListener('click', this._tapHandler);
+    this.addEventListener('advanced-camera-card:media:play', this._playHandler);
+  }
+
+  disconnectedCallback(): void {
+    this._clearPlaybackIconTimer();
+    this.removeEventListener('click', this._tapHandler);
+    this.removeEventListener('advanced-camera-card:media:play', this._playHandler);
+    super.disconnectedCallback();
+  }
+
+  private _backToLive(ev: Event): void {
+    // This sits on the video, where a tap would otherwise also pause playback.
+    ev.stopPropagation();
+    stopEventFromActivatingCardWideActions(ev);
+    void this.viewManagerEpoch?.manager.setViewByParametersWithNewQuery({
+      params: { view: 'live' },
+    });
+  }
+
+  private _tapHandler = async (): Promise<void> => {
+    if (this.viewerConfig?.controls.tap_to_play_pause) {
+      const controller = await this.getMediaPlayerController();
+      await togglePlayback(controller);
+
+      // Only a tap sets this: the card also pauses media itself while scrubbing,
+      // which would otherwise make the icon flicker.
+      if (controller?.playback?.isPaused()) {
+        this._clearPlaybackIconTimer();
+        this._playbackIcon = 'mdi:play';
+      }
+    }
+  };
 
   public async getMediaPlayerController(): Promise<MediaPlayerController | null> {
     await this.updateComplete;
@@ -259,7 +336,7 @@ export class AdvancedCameraCardViewerProvider extends LitElement implements Medi
       this._resolvedMediaController.getValue()?.mime_type,
     );
 
-    return this._renderContainer(html`
+    return html`${this._renderContainer(html`
       ${isVideo
         ? isHLS
           ? html`<advanced-camera-card-ha-hls-player
@@ -300,7 +377,28 @@ export class AdvancedCameraCardViewerProvider extends LitElement implements Medi
               }
             }}
           ></advanced-camera-card-image-player>`}
-    `);
+    `)}
+    ${isVideo
+      ? html`<advanced-camera-card-viewer-footage-time
+          .media=${this.media}
+          .cameraManager=${this.cameraManager}
+          .getPosition=${this._getPosition}
+        ></advanced-camera-card-viewer-footage-time>`
+      : ''}
+    ${isVideo && this.viewerConfig?.controls.back_to_live
+      ? html`<button
+          class="back-to-live"
+          @click=${(ev: Event) => this._backToLive(ev)}
+        >
+          ${localize('media_viewer.back_to_live')}
+        </button>`
+      : ''}
+    ${isVideo && this.viewerConfig?.controls.tap_to_play_pause && this._playbackIcon
+      ? html`<advanced-camera-card-icon
+          class="playback-state"
+          .icon=${{ icon: this._playbackIcon }}
+        ></advanced-camera-card-icon>`
+      : ''}`;
   }
 
   static get styles(): CSSResultGroup {

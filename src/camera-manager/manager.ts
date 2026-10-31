@@ -770,6 +770,24 @@ export class CameraManager {
     );
   }
 
+  public async getMediaTimeAtPosition(
+    media: ViewMedia,
+    position: number,
+  ): Promise<Date | null> {
+    const engine = this._store.getEngineForMedia(media);
+    const hass = this._api.getHASSManager().getHASS();
+
+    if (!hass || !engine) {
+      return null;
+    }
+
+    return (
+      (await this._requestLimit.add(() =>
+        engine.getMediaTimeAtPosition(hass, this._store, media, position),
+      )) ?? null
+    );
+  }
+
   private async _handleQuery<QT extends CameraQuery>(
     query: QT | QT[],
     engineOptions?: EngineOptions,

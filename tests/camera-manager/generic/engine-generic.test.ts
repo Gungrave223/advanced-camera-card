@@ -265,6 +265,18 @@ describe('GenericCameraManagerEngine', () => {
     ).toBeNull();
   });
 
+  it('should not know the time at a media position', async () => {
+    const engine = createEngine();
+    expect(
+      await engine.getMediaTimeAtPosition(
+        createHASS(),
+        createStore([{ cameraID: 'camera-1', engine: engine }]),
+        new TestViewMedia(),
+        1,
+      ),
+    ).toBeNull();
+  });
+
   it('should get media metadata', async () => {
     const engine = createEngine();
     expect(

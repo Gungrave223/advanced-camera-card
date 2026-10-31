@@ -104,6 +104,10 @@ export interface MediaPlayerController {
   // implemented only by players over seekable media.
   seek?(seconds: number): Promise<void>;
 
+  // The current position in the media, in seconds. Optional: implemented only
+  // by players over seekable media.
+  getCurrentTime?(): number | null;
+
   // Start/pause the media, if it is pausable. Optional: implemented only by
   // players that own a pausable playback loop.
   playback?: PlaybackControl;

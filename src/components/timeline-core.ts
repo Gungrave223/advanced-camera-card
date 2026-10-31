@@ -33,7 +33,6 @@ import './date-picker.js';
 
 import type { AdvancedCameraCardDatePicker, DatePickerEvent } from './date-picker.js';
 
-import './icon';
 
 import { renderNotificationBlockFromText } from './notification/block';
 
@@ -150,6 +149,10 @@ export class AdvancedCameraCardTimelineCore extends LitElement {
   private _refTimeline: Ref<HTMLElement> = createRef();
   private _controller: TimelineController = new TimelineController(this);
 
+  public setPlayhead(time: Date | null): void {
+    this._controller.setPlayhead(time);
+  }
+
   protected render(): TemplateResult | void {
     if (!this.hass || !this.timelineConfig) {
       return;
@@ -178,25 +181,6 @@ export class AdvancedCameraCardTimelineCore extends LitElement {
       return;
     }
 
-    const panMode = this._controller.getEffectivePanMode();
-
-    const panTitle =
-      panMode === 'pan'
-        ? localize('config.common.controls.timeline.pan_modes.pan')
-        : panMode === 'seek'
-          ? localize('config.common.controls.timeline.pan_modes.seek')
-          : panMode === 'seek-in-media'
-            ? localize('config.common.controls.timeline.pan_modes.seek-in-media')
-            : localize('config.common.controls.timeline.pan_modes.seek-in-camera');
-    const panIcon =
-      panMode === 'pan'
-        ? 'mdi:pan-horizontal'
-        : panMode === 'seek'
-          ? 'mdi:filmstrip-box-multiple'
-          : panMode === 'seek-in-media'
-            ? 'mdi:play-box-lock'
-            : 'mdi:camera-lock';
-
     return html` <div
       @advanced-camera-card:timeline:thumbnail-data-request=${this._controller
         .handleThumbnailDataRequest}
@@ -204,15 +188,6 @@ export class AdvancedCameraCardTimelineCore extends LitElement {
       ${ref(this._refTimeline)}
     >
       <div class="timeline-tools">
-        ${this._controller.shouldSupportSeeking()
-          ? html` <advanced-camera-card-icon
-              .icon=${{ icon: panIcon }}
-              @click=${() => this._controller.cyclePanMode()}
-              aria-label="${panTitle}"
-              title="${panTitle}"
-            >
-            </advanced-camera-card-icon>`
-          : ''}
         <advanced-camera-card-date-picker
           ${ref(this._refDatePicker)}
           @advanced-camera-card:date-picker:change=${(

@@ -38,6 +38,7 @@ live:
 | Option          | Default | Description                                                                                                        |
 | --------------- | ------- | ------------------------------------------------------------------------------------------------------------------ |
 | `builtin`       | `true`  | Whether to show the built in (browser) video controls on live video.                                               |
+| `tap_to_play_pause` | `false` | Whether tapping the video plays or pauses it. |
 | `call`          |         | Configures the on-screen [two-way audio](../usage/2-way-audio.md) call controls. See [`call`](#call).              |
 | `next_previous` |         | Configures how the "Next & Previous" controls are shown on the `live` view. See [`next_previous`](#next_previous). |
 | `thumbnails`    |         | Configures how thumbnails are shown on the `live` view. See [`thumbnails`](#thumbnails).                           |

@@ -916,6 +916,47 @@ export class FrigateCameraManagerEngine
     target: Date,
     engineOptions?: EngineOptions,
   ): Promise<number | null> {
+    const range = this._getMediaSegmentRange(hass, media);
+    if (!range || target < range.start || target > range.end) {
+      return null;
+    }
+
+    const segments = await this._getMediaSegments(
+      hass,
+      store,
+      media,
+      range,
+      engineOptions,
+    );
+    return segments ? this._getSeekTimeInSegments(range.start, target, segments) : null;
+  }
+
+  public async getMediaTimeAtPosition(
+    hass: HomeAssistant,
+    store: CameraManagerReadOnlyConfigStore,
+    media: ViewMedia,
+    position: number,
+    engineOptions?: EngineOptions,
+  ): Promise<Date | null> {
+    const range = this._getMediaSegmentRange(hass, media);
+    if (!range) {
+      return null;
+    }
+
+    const segments = await this._getMediaSegments(
+      hass,
+      store,
+      media,
+      range,
+      engineOptions,
+    );
+    return segments ? this._getTimeInSegments(range, position, segments) : null;
+  }
+
+  private _getMediaSegmentRange(
+    hass: HomeAssistant,
+    media: ViewMedia,
+  ): { start: Date; end: Date } | null {
     const mediaStart = media.getStartTime();
     const mediaEnd = media.getEndTime();
     const cameraID = media.getCameraID();
@@ -935,29 +976,83 @@ export class FrigateCameraManagerEngine
       : mediaStart;
     const end = isRecordingBased ? endOfHourInTimeZone(mediaStart, timeZone) : mediaEnd;
 
-    if (!end || target < start || target > end) {
+    return end ? { start, end } : null;
+  }
+
+  private async _getMediaSegments(
+    hass: HomeAssistant,
+    store: CameraManagerReadOnlyConfigStore,
+    media: ViewMedia,
+    range: { start: Date; end: Date },
+    engineOptions?: EngineOptions,
+  ): Promise<RecordingSegment[] | null> {
+    const cameraID = media.getCameraID();
+    if (!cameraID) {
       return null;
     }
 
     const query: RecordingSegmentsQuery = {
       cameraIDs: new Set([cameraID]),
-      start: start,
-      end: end,
+      start: range.start,
+      end: range.end,
       type: QueryType.RecordingSegments,
     };
 
     const results = await this.getRecordingSegments(hass, store, query, engineOptions);
 
-    if (results) {
-      return this._getSeekTimeInSegments(
-        start,
-        target,
-        // There will only be a single result since Frigate recording segments
-        // searches are per camera which is specified singularly above.
-        Array.from(results.values())[0].segments,
-      );
+    // There will only be a single result since Frigate recording segments
+    // searches are per camera which is specified singularly above.
+    return results ? Array.from(results.values())[0].segments : null;
+  }
+
+  private _getSeekTimeInSegments(
+    startTime: Date,
+    targetTime: Date,
+    segments: RecordingSegment[],
+  ): number | null {
+    if (!segments.length) {
+      return null;
     }
-    return null;
+    let seekMilliseconds = 0;
+
+    // Inspired by: https://github.com/blakeblackshear/frigate/blob/release-0.11.0/web/src
+    for (const segment of segments) {
+      const segmentStart = fromUnixTime(segment.start_time);
+      if (segmentStart > targetTime) {
+        break;
+      }
+      const segmentEnd = fromUnixTime(segment.end_time);
+      const start = segmentStart < startTime ? startTime : segmentStart;
+      const end = segmentEnd > targetTime ? targetTime : segmentEnd;
+      seekMilliseconds += end.getTime() - start.getTime();
+    }
+    return seekMilliseconds / 1000;
+  }
+
+  // The inverse of _getSeekTimeInSegments: gaps between segments take up no
+  // space in the video, so the position is counted through the segments.
+  private _getTimeInSegments(
+    range: { start: Date; end: Date },
+    position: number,
+    segments: RecordingSegment[],
+  ): Date | null {
+    const sorted = [...segments].sort((a, b) => a.start_time - b.start_time);
+    let remainingMilliseconds = position * 1000;
+    let lastEnd: number | null = null;
+
+    for (const segment of sorted) {
+      const start = Math.max(segment.start_time * 1000, range.start.getTime());
+      const end = Math.min(segment.end_time * 1000, range.end.getTime());
+      if (end <= start) {
+        continue;
+      }
+      if (remainingMilliseconds <= end - start) {
+        return new Date(start + remainingMilliseconds);
+      }
+      remainingMilliseconds -= end - start;
+      lastEnd = end;
+    }
+    return lastEnd === null ? null : new Date(lastEnd);
   }
 
   private _getQueryableCameraConfig(
@@ -1158,30 +1253,6 @@ export class FrigateCameraManagerEngine
    * @param segments An array of segments dataset items. Must be sorted from oldest to youngest.
    * @returns
    */
-  private _getSeekTimeInSegments(
-    startTime: Date,
-    targetTime: Date,
-    segments: RecordingSegment[],
-  ): number | null {
-    if (!segments.length) {
-      return null;
-    }
-    let seekMilliseconds = 0;
-
-    // Inspired by: https://github.com/blakeblackshear/frigate/blob/release-0.11.0/web/src/routes/Recording.jsx#L27
-    for (const segment of segments) {
-      const segmentStart = fromUnixTime(segment.start_time);
-      if (segmentStart > targetTime) {
-        break;
-      }
-      const segmentEnd = fromUnixTime(segment.end_time);
-      const start = segmentStart < startTime ? startTime : segmentStart;
-      const end = segmentEnd > targetTime ? targetTime : segmentEnd;
-      seekMilliseconds += end.getTime() - start.getTime();
-    }
-    return seekMilliseconds / 1000;
-  }
-
   public getMediaCapabilities(media: ViewMedia): ViewItemCapabilities {
     return {
       canFavorite: ViewItemClassifier.isEvent(media),
