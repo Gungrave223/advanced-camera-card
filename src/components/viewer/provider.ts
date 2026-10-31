@@ -33,20 +33,23 @@ import type { HomeAssistant } from '../../ha/types.js';
 import '../../patches/ha-hls-player.js';
 
 import viewerProviderStyle from '../../scss/viewer-provider.scss?inline';
+
 import '../icon.js';
 import './footage-time.js';
+
+import { localize } from '../../localize/localize.js';
 import type {
   MediaPlayer,
   MediaPlayerController,
   MediaPlayerElement,
 } from '../../types.js';
+import { stopEventFromActivatingCardWideActions } from '../../utils/action.js';
 import { classifyMimeType } from '../../utils/mime-type.js';
+import { togglePlayback } from '../../utils/playback.js';
+import { Timer } from '../../utils/timer.js';
 import { ViewItemClassifier } from '../../view/item-classifier.js';
 import type { ViewMedia } from '../../view/item.js';
 import { UnifiedQueryTransformer } from '../../view/unified-query-transformer.js';
-import { togglePlayback } from '../../utils/playback.js';
-import { localize } from '../../localize/localize.js';
-import { stopEventFromActivatingCardWideActions } from '../../utils/action.js';
 
 import '../image-player.js';
 
@@ -56,7 +59,7 @@ import { renderProgressIndicator } from '../progress-indicator.js';
 import '../video-player.js';
 import './../media-dimensions-container';
 
-const PLAYBACK_ICON_RESUME_MS = 800;
+const PLAYBACK_ICON_RESUME_SECONDS = 0.8;
 
 @customElement('advanced-camera-card-viewer-provider')
 export class AdvancedCameraCardViewerProvider extends LitElement implements MediaPlayer {
@@ -144,23 +147,15 @@ export class AdvancedCameraCardViewerProvider extends LitElement implements Medi
   // Resuming only needs a brief confirmation.
   @state()
   private _playbackIcon: 'mdi:play' | 'mdi:pause' | null = null;
-  private _playbackIconTimer: number | null = null;
-
-  private _clearPlaybackIconTimer(): void {
-    if (this._playbackIconTimer !== null) {
-      window.clearTimeout(this._playbackIconTimer);
-      this._playbackIconTimer = null;
-    }
-  }
+  private _playbackIconTimer = new Timer();
 
   private _playHandler = (): void => {
-    this._clearPlaybackIconTimer();
+    this._playbackIconTimer.stop();
     if (this._playbackIcon) {
       this._playbackIcon = 'mdi:pause';
-      this._playbackIconTimer = window.setTimeout(() => {
+      this._playbackIconTimer.start(PLAYBACK_ICON_RESUME_SECONDS, () => {
         this._playbackIcon = null;
-        this._playbackIconTimer = null;
-      }, PLAYBACK_ICON_RESUME_MS);
+      });
     }
   };
 
@@ -171,7 +166,7 @@ export class AdvancedCameraCardViewerProvider extends LitElement implements Medi
   }
 
   disconnectedCallback(): void {
-    this._clearPlaybackIconTimer();
+    this._playbackIconTimer.stop();
     this.removeEventListener('click', this._tapHandler);
     this.removeEventListener('advanced-camera-card:media:play', this._playHandler);
     super.disconnectedCallback();
@@ -194,7 +189,7 @@ export class AdvancedCameraCardViewerProvider extends LitElement implements Medi
       // Only a tap sets this: the card also pauses media itself while scrubbing,
       // which would otherwise make the icon flicker.
       if (controller?.playback?.isPaused()) {
-        this._clearPlaybackIconTimer();
+        this._playbackIconTimer.stop();
         this._playbackIcon = 'mdi:play';
       }
     }
@@ -386,10 +381,7 @@ export class AdvancedCameraCardViewerProvider extends LitElement implements Medi
         ></advanced-camera-card-viewer-footage-time>`
       : ''}
     ${isVideo && this.viewerConfig?.controls.back_to_live
-      ? html`<button
-          class="back-to-live"
-          @click=${(ev: Event) => this._backToLive(ev)}
-        >
+      ? html`<button class="back-to-live" @click=${(ev: Event) => this._backToLive(ev)}>
           ${localize('media_viewer.back_to_live')}
         </button>`
       : ''}

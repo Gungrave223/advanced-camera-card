@@ -9,8 +9,6 @@ import { customElement, property } from 'lit/decorators.js';
 
 import loadingStyle from '../scss/loading.scss?inline';
 import type { EffectName, EffectsManagerInterface } from '../types';
-import { formatDateAndTime } from '../utils/basic.js';
-import { getReleaseVersion, getUnreleasedBuildDate } from '../utils/build-info.js';
 
 import './icon';
 
@@ -81,14 +79,9 @@ export class AdvancedCameraCardLoading extends LitElement {
   }
 
   protected render(): TemplateResult {
-    const buildDate = getUnreleasedBuildDate();
-
     return html`<advanced-camera-card-icon
-        .icon=${{ icon: 'advanced-camera-card:iris' }}
-      ></advanced-camera-card-icon
-      ><span>${getReleaseVersion()}</span> ${buildDate
-        ? html`<span class="build-date">${formatDateAndTime(buildDate, true)}</span>`
-        : ''}`;
+      .icon=${{ icon: 'advanced-camera-card:iris' }}
+    ></advanced-camera-card-icon>`;
   }
 
   static get styles(): CSSResultGroup {

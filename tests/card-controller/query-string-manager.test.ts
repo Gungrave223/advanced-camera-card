@@ -104,6 +104,54 @@ describe('QueryStringManager', () => {
     });
   });
 
+  describe('should handle recording_at', () => {
+    it('should open the recording at the requested time', async () => {
+      setQueryString(
+        '?advanced-camera-card-action.id.camera_select=camera.office' +
+          '&advanced-camera-card-action.id.recording_at=1793297427',
+      );
+      const api = createCardAPI();
+      setCardID(api, 'id');
+      const manager = new QueryStringManager(api);
+
+      expect(manager.hasViewRelatedActionsToRun()).toBeTruthy();
+      await manager.executeIfNecessary();
+
+      const time = new Date(1793297427000);
+      expect(
+        api.getViewManager().setViewByParametersWithExistingQuery,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          params: expect.objectContaining({
+            view: 'recording',
+            camera: 'camera.office',
+          }),
+          queryExecutorOptions: {
+            selectResult: { time: { time, favorCameraID: 'camera.office' } },
+          },
+        }),
+      );
+      expect(
+        api.getViewManager().setViewByParametersWithNewQuery,
+      ).not.toHaveBeenCalled();
+      expect(api.getActionsManager().executeActions).not.toHaveBeenCalled();
+    });
+
+    it('should ignore an invalid time', async () => {
+      setQueryString('?advanced-camera-card-action.id.recording_at=soon');
+      const api = createCardAPI();
+      setCardID(api, 'id');
+      const manager = new QueryStringManager(api);
+
+      expect(manager.hasViewRelatedActionsToRun()).toBeFalsy();
+      await manager.executeIfNecessary();
+
+      expect(
+        api.getViewManager().setViewByParametersWithExistingQuery,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
   it('should execute view default action', async () => {
     setQueryString('?advanced-camera-card-action.id.default=');
     const api = createCardAPI();

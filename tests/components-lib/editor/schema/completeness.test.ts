@@ -63,6 +63,10 @@ const EDITOR_CUSTOM_WIDGETS = PTZ_KEYBOARD_SHORTCUTS.map(
 
 // Configuration subtrees intentionally kept YAML-only.
 const EDITOR_EXCLUDED = [
+  // Fork-only options.
+  'live.controls.tap_to_play_pause',
+  'media_viewer.controls.back_to_live',
+  'media_viewer.controls.tap_to_play_pause',
   'cameras_global',
   'elements',
   'automations',

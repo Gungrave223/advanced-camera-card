@@ -297,6 +297,71 @@ describe('TimelineController', () => {
     });
   });
 
+  describe('should open a recording when a drag ends between media', () => {
+    const POINTER_TIME = add(WINDOW.start, { minutes: 30 });
+    const release = (harness: TestHarness) =>
+      harness.trigger('rangechanged', {
+        start: WINDOW.start,
+        end: WINDOW.end,
+        byUser: true,
+        event: new Event('pointerup'),
+      });
+
+    it('should open the recording at the drag target', async () => {
+      const harness = await createHarness({ panMode: 'seek-in-camera' });
+
+      dragTimeline(harness, POINTER_TIME);
+      release(harness);
+
+      await vi.waitFor(() =>
+        expect(
+          harness.manager.setViewByParametersWithExistingQuery,
+        ).toHaveBeenCalledWith(
+          expect.objectContaining({
+            params: expect.objectContaining({ view: 'recording' }),
+          }),
+        ),
+      );
+    });
+
+    it('should stay on media that covers the drag target', async () => {
+      const media = createReviewMedia();
+      const harness = await createHarness({
+        panMode: 'seek-in-camera',
+        media: [media],
+      });
+
+      dragTimeline(harness, POINTER_TIME);
+      release(harness);
+      await vi.waitFor(() =>
+        expect(harness.manager.setViewByParameters).toHaveBeenCalled(),
+      );
+
+      expect(
+        harness.manager.setViewByParametersWithExistingQuery,
+      ).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          params: expect.objectContaining({ view: 'recording' }),
+        }),
+      );
+    });
+
+    it('should not open a recording without a drag', async () => {
+      const harness = await createHarness({ panMode: 'seek-in-camera' });
+
+      release(harness);
+      await vi.waitFor(() => expect(harness.timeline.setWindow).toHaveBeenCalled());
+
+      expect(
+        harness.manager.setViewByParametersWithExistingQuery,
+      ).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          params: expect.objectContaining({ view: 'recording' }),
+        }),
+      );
+    });
+  });
+
   it('should redraw a new timeline after it is created', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     try {

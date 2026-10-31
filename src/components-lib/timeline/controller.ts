@@ -34,6 +34,7 @@ import { stopEventFromActivatingCardWideActions } from '../../utils/action';
 import { formatDateAndTime, isHoverableDevice, isTruthy } from '../../utils/basic';
 import { findBestMediaTimeIndex } from '../../utils/find-best-media-time-index';
 import { fireAdvancedCameraCardEvent } from '../../utils/fire-advanced-camera-card-event';
+import { Timer } from '../../utils/timer';
 import type { ViewMedia } from '../../view/item';
 import { ViewItemClassifier } from '../../view/item-classifier';
 import { QueryResults } from '../../view/query-results';
@@ -81,7 +82,7 @@ const TIMELINE_TARGET_BAR_ID = 'target_bar';
 const TIMELINE_PLAYHEAD_ID = 'playhead';
 
 // How long after creation to make sure a timeline has been revealed.
-const TIMELINE_REVEAL_DELAYS_MS = [300, 1000];
+const TIMELINE_REVEAL_DELAYS_SECONDS = [0.3, 1];
 
 // How close (as a proportion of the window) the playhead may get to either edge
 // of the timeline before the window moves to bring it back to the center.
@@ -109,7 +110,8 @@ export class TimelineController {
   private _targetBarVisible = false;
   private _playheadVisible = false;
   private _hasSetWindow = false;
-  private _revealTimers: number[] = [];
+  private _seekTarget: Date | null = null;
+  private _revealTimers: Timer[] = [];
   private _itemClickAction: TimelineItemClickAction = 'play';
 
   private _thumbnailConfig: ThumbnailsControlBaseConfig | null = null;
@@ -138,7 +140,7 @@ export class TimelineController {
   }
 
   public destroyTimeline(): void {
-    this._revealTimers.forEach((timer) => window.clearTimeout(timer));
+    this._revealTimers.forEach((timer) => timer.stop());
     this._revealTimers = [];
     this._timeline?.destroy();
     this._timeline = null;
@@ -355,15 +357,17 @@ export class TimelineController {
 
     // A timeline created while entering fullscreen may stay invisible until the
     // next redraw, which nothing else would trigger until the window resizes.
-    this._revealTimers = TIMELINE_REVEAL_DELAYS_MS.map((delay) =>
-      window.setTimeout(() => {
+    this._revealTimers = TIMELINE_REVEAL_DELAYS_SECONDS.map((delay) => {
+      const timer = new Timer();
+      timer.start(delay, () => {
         const root = this._timelineElement?.querySelector<HTMLElement>('.vis-timeline');
         if (root) {
           root.style.visibility = 'visible';
         }
         this._timeline?.redraw();
-      }, delay),
-    );
+      });
+      return timer;
+    });
 
     this._timeline.on('rangechanged', this._timelineRangeChangedHandler.bind(this));
     this._timeline.on('click', this._timelineClickHandler.bind(this));
@@ -490,6 +494,7 @@ export class TimelineController {
 
     const canSeek = this.shouldSupportSeeking();
     let newResults: QueryResults | null = null;
+    this._seekTarget = canSeek && targetTime < new Date() ? targetTime : null;
 
     if (panMode === 'seek') {
       newResults = results
@@ -589,29 +594,7 @@ export class TimelineController {
       this._source &&
       this._timeline
     ) {
-      const query = this._source.buildRecordingsWindowedQuery(
-        convertRangeToCacheFriendlyTimes(
-          this._getPrefetchWindow(this._timeline.getWindow()),
-        ),
-      );
-      if (query) {
-        await this._viewManagerEpoch?.manager.setViewByParametersWithExistingQuery({
-          baseView: view,
-          params: { view: 'recording', query: query },
-          queryExecutorOptions: {
-            selectResult: {
-              time: {
-                time: properties.time,
-              },
-            },
-          },
-          modifiers: [
-            new MergeContextViewModifier({
-              mediaViewer: { seek: properties.time },
-            }),
-          ],
-        });
-      }
+      await this._openRecordingAtTime(properties.time);
     } else if (item && properties.what === 'item') {
       const cameraID = String(properties.group);
 
@@ -721,6 +704,57 @@ export class TimelineController {
     });
   }
 
+  private async _openRecordingAtTime(time: Date): Promise<void> {
+    const view = this._viewManagerEpoch?.manager.getView();
+    if (!view || !this._source || !this._timeline) {
+      return;
+    }
+
+    const query = this._source.buildRecordingsWindowedQuery(
+      convertRangeToCacheFriendlyTimes(
+        this._getPrefetchWindow(this._timeline.getWindow()),
+      ),
+    );
+    if (query) {
+      await this._viewManagerEpoch?.manager.setViewByParametersWithExistingQuery({
+        baseView: view,
+        params: { view: 'recording', query: query },
+        queryExecutorOptions: {
+          selectResult: {
+            time: {
+              time: time,
+            },
+          },
+        },
+        modifiers: [
+          new MergeContextViewModifier({
+            mediaViewer: { seek: time },
+          }),
+        ],
+      });
+    }
+  }
+
+  // Scrubbing only moves between the view's current results, which are often
+  // short events. If the drag ended between them, there is still footage at
+  // that time in the hour-long recordings.
+  private async _seekToRecordingIfNecessary(): Promise<void> {
+    await this._throttledSetViewDuringRangeChange.flush();
+
+    const target = this._seekTarget;
+    this._seekTarget = null;
+    const selected = this._viewManagerEpoch?.manager
+      .getView()
+      ?.queryResults?.getSelectedResult();
+
+    if (
+      target &&
+      !(ViewItemClassifier.isMedia(selected) && selected.includesTime(target))
+    ) {
+      await this._openRecordingAtTime(target);
+    }
+  }
+
   private _timelineRangeChangedHandler = async (properties: {
     start: Date;
     end: Date;
@@ -741,6 +775,7 @@ export class TimelineController {
       return;
     }
 
+    await this._seekToRecordingIfNecessary();
     await this._source?.refresh(this._getPrefetchWindow(properties));
 
     if (!view.query) {

@@ -28,25 +28,6 @@
   pointer-events: none;
 }
 
-// Scrubbing fast briefly lands between media items, so the warning only appears
-// if the card stays there.
-:host([unseekable]) advanced-camera-card-carousel {
-  filter: brightness(50%);
-  transition: filter 0s 1500ms;
-}
-:host([unseekable]) .seek-warning {
-  display: block;
-  animation: seek-warning-delay 1500ms step-end;
-}
-@keyframes seek-warning-delay {
-  from {
-    visibility: hidden;
-  }
-  to {
-    visibility: visible;
-  }
-}
-
 .seek-warning {
   display: none;
   position: absolute;

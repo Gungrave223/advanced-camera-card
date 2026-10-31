@@ -4,9 +4,10 @@ import { customElement, property, state } from 'lit/decorators.js';
 
 import type { CameraManager } from '../../camera-manager/manager.js';
 import { fireAdvancedCameraCardEvent } from '../../utils/fire-advanced-camera-card-event.js';
+import { Timer } from '../../utils/timer.js';
 import type { ViewMedia } from '../../view/item.js';
 
-const UPDATE_INTERVAL_MS = 500;
+const UPDATE_INTERVAL_SECONDS = 0.5;
 
 /**
  * Shows the real-world time of the footage currently playing. Players only know
@@ -27,20 +28,17 @@ export class AdvancedCameraCardViewerFootageTime extends LitElement {
   @state()
   private _time: Date | null = null;
 
-  private _timer: number | null = null;
+  private _timer = new Timer();
   private _lastPosition: number | null = null;
   private _lastMedia: ViewMedia | null = null;
 
   connectedCallback(): void {
     super.connectedCallback();
-    this._timer = window.setInterval(() => void this._update(), UPDATE_INTERVAL_MS);
+    this._timer.startRepeated(UPDATE_INTERVAL_SECONDS, () => void this._update());
   }
 
   disconnectedCallback(): void {
-    if (this._timer !== null) {
-      window.clearInterval(this._timer);
-      this._timer = null;
-    }
+    this._timer.stop();
     super.disconnectedCallback();
   }
 

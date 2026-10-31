@@ -1,7 +1,7 @@
 import type { CameraManager } from '../../camera-manager/manager';
-import type { ViewModifier, ViewManagerEpoch } from '../../card-controller/view/types';
-import { ViewItemClassifier } from '../../view/item-classifier';
+import type { ViewManagerEpoch, ViewModifier } from '../../card-controller/view/types';
 import type { ViewMedia } from '../../view/item';
+import { ViewItemClassifier } from '../../view/item-classifier';
 import { QueryResults } from '../../view/query-results';
 import type { UnifiedQuery } from '../../view/unified-query';
 import type { UnifiedQueryBuilder } from '../../view/unified-query-builder';
@@ -53,8 +53,7 @@ export class RecordingEventsController {
       this._loading ||
       (cameraID === this._cameraID &&
         this._loadedAt &&
-        new Date().getTime() - this._loadedAt.getTime() <
-          EVENTS_MAX_AGE_SECONDS * 1000)
+        new Date().getTime() - this._loadedAt.getTime() < EVENTS_MAX_AGE_SECONDS * 1000)
     ) {
       return;
     }

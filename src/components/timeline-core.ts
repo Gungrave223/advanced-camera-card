@@ -32,8 +32,6 @@ import { contentsChanged } from '../utils/basic';
 import './date-picker.js';
 
 import type { AdvancedCameraCardDatePicker, DatePickerEvent } from './date-picker.js';
-
-
 import { renderNotificationBlockFromText } from './notification/block';
 
 import './thumbnail/thumbnail.js';

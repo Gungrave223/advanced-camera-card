@@ -75,6 +75,7 @@ Only a subset of all [actions](../configuration/actions/README.md) are supported
 | `play`, `pause`                        | :heavy_multiplication_x: |                                                                                                                                  |
 | `ptz`                                  | :heavy_multiplication_x: | Please [request](https://github.com/dermotduffy/advanced-camera-card/issues) if you need this.                                   |
 | `recording`                            | :white_check_mark:       |                                                                                                                                  |
+| `recording_at`                         | :white_check_mark:       | Pass a time in Unix seconds to open the recording at that time. Combine with `camera_select` to choose the camera.               |
 | `recordings`                           | :white_check_mark:       |                                                                                                                                  |
 | `review`                               | :white_check_mark:       |                                                                                                                                  |
 | `reviews`                              | :white_check_mark:       |                                                                                                                                  |

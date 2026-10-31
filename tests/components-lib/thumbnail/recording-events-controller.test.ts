@@ -1,6 +1,7 @@
 import { add } from 'date-fns';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mock } from 'vitest-mock-extended';
+
 import type { CameraManager } from '../../../src/camera-manager/manager';
 import type { ViewManagerEpoch } from '../../../src/card-controller/view/types';
 import { RecordingEventsController } from '../../../src/components-lib/thumbnail/recording-events-controller';
@@ -73,7 +74,9 @@ describe('RecordingEventsController', () => {
     await controller.update(createView(ViewMediaType.Recording), builder, cameraManager);
 
     expect(controller.getEvents(createView(ViewMediaType.Review))).toBeNull();
-    expect(controller.getEvents(createView(ViewMediaType.Recording, 'other'))).toBeNull();
+    expect(
+      controller.getEvents(createView(ViewMediaType.Recording, 'other')),
+    ).toBeNull();
     expect(controller.getEvents(null)).toBeNull();
   });
 

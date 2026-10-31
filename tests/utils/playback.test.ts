@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { mock } from 'vitest-mock-extended';
+
 import type { MediaPlayerController, PlaybackControl } from '../../src/types';
 import { togglePlayback } from '../../src/utils/playback';
 

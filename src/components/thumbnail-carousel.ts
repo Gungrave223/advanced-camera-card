@@ -21,6 +21,7 @@ import {
   navigateUp,
   type FolderNavigationParamaters,
 } from '../components-lib/navigation.js';
+import { RecordingEventsController } from '../components-lib/thumbnail/recording-events-controller.js';
 import type { ThumbnailsControlConfig } from '../config/schema/common/controls/thumbnails.js';
 import type { CardWideConfig } from '../config/schema/types.js';
 import type { HomeAssistant } from '../ha/types.js';
@@ -30,7 +31,6 @@ import type { CarouselDirection } from '../utils/embla/carousel-controller.js';
 import { fireAdvancedCameraCardEvent } from '../utils/fire-advanced-camera-card-event.js';
 import { ViewItemClassifier } from '../view/item-classifier.js';
 import type { ViewItem, ViewMedia } from '../view/item.js';
-import { RecordingEventsController } from '../components-lib/thumbnail/recording-events-controller.js';
 import { UnifiedQueryBuilder } from '../view/unified-query-builder.js';
 import { getReviewedQueryFilterFromQuery } from '../view/utils/query-filter.js';
 

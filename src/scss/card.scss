@@ -161,8 +161,16 @@ web-dialog {
   --dialog-max-height: var(--advanced-camera-card-expand-max-height);
   --dialog-max-width: var(--advanced-camera-card-expand-max-width);
 
-  --dialog-width: var(--advanced-camera-card-expand-width);
-  --dialog-height: var(--advanced-camera-card-expand-height);
+  // The fill variables let a dashboard make the dialog take the whole screen,
+  // instead of sizing itself to the media.
+  --dialog-width: var(
+    --advanced-camera-card-expand-fill-width,
+    var(--advanced-camera-card-expand-width)
+  );
+  --dialog-height: var(
+    --advanced-camera-card-expand-fill-height,
+    var(--advanced-camera-card-expand-height)
+  );
 
   // Allow submenus to flow outside the edge of the dialog.
   --dialog-overflow-x: visible;
@@ -173,7 +181,10 @@ web-dialog {
 }
 
 web-dialog::part(dialog) {
-  aspect-ratio: var(--advanced-camera-card-expand-aspect-ratio);
+  aspect-ratio: var(
+    --advanced-camera-card-expand-fill-aspect-ratio,
+    var(--advanced-camera-card-expand-aspect-ratio)
+  );
 
   // Fixes to render the dialog correctly in Safari.
   border-radius: 0px;

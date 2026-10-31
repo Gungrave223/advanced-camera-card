@@ -308,8 +308,10 @@ export interface CardMicrophoneAPI {
 
 export interface CardQueryStringAPI {
   getActionsManager(): ActionsManager;
+  getCameraManager(): CameraManager;
   getCardElementManager(): CardElementManager;
   getConfigManager(): ConfigManager;
+  getFoldersManager(): FoldersManager;
   getViewManager(): ViewManager;
 }
 
