@@ -125,6 +125,7 @@ export class AdvancedCameraCardViewerFootageTime extends LitElement {
         bottom: 72px;
         left: 50%;
         transform: translateX(-50%);
+        font-size: 18px;
         text-transform: capitalize;
       }
       .time {
