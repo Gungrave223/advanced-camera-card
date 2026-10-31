@@ -108,7 +108,8 @@ export class AdvancedCameraCardViewerFootageTime extends LitElement {
         right: 8px;
         z-index: 3;
         display: flex;
-        gap: 8px;
+        flex-direction: column;
+        gap: 4px;
         pointer-events: none;
         white-space: nowrap;
         font-size: 14px;
@@ -121,10 +122,11 @@ export class AdvancedCameraCardViewerFootageTime extends LitElement {
         background: rgba(0, 0, 0, 0.65);
       }
       .labels {
+        align-self: center;
         text-transform: capitalize;
       }
       .time {
-        margin-left: auto;
+        align-self: flex-end;
       }
     `;
   }
