@@ -3,6 +3,10 @@
 $drawer-icon-size: 20px;
 $drawer-padding-extend: 20px;
 
+:host {
+  display: var(--advanced-camera-card-drawer-display, block);
+}
+
 side-drawer {
   background-color: var(--card-background-color);
 }

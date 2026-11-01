@@ -30,6 +30,19 @@
   --advanced-camera-card-expand-aspect-ratio: unset;
 
   --advanced-camera-card-height: auto;
+
+  // The side drawers (the clips menu) only show in fullscreen or expanded.
+  --advanced-camera-card-drawer-display: none;
+}
+
+:host([expanded]) {
+  --advanced-camera-card-drawer-display: block;
+}
+:host(:fullscreen) {
+  --advanced-camera-card-drawer-display: block;
+}
+:host(:-webkit-full-screen) {
+  --advanced-camera-card-drawer-display: block;
 }
 
 // Without hovering over the card, it is "flattened" to avoid z-index weaving

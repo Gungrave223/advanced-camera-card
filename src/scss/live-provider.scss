@@ -35,6 +35,22 @@
   }
 }
 
+.live-label {
+  position: absolute;
+  top: calc(16px + var(--advanced-camera-card-menu-top-offset, 0px));
+  left: 16px;
+  z-index: 3;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #4caf50;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
 advanced-camera-card-icon {
   position: absolute;
   top: 10px;
