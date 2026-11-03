@@ -119,6 +119,7 @@ export interface RecordingViewMedia extends ViewMedia {
 
 export interface ReviewViewMedia extends ViewMedia {
   getWhat(): string[] | null;
+  getTags(): string[] | null;
 }
 
 interface ViewFolderParameters {

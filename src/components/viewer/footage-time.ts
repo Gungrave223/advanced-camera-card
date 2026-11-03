@@ -3,7 +3,11 @@ import { css, html, LitElement, type CSSResultGroup, type TemplateResult } from 
 import { customElement, property, state } from 'lit/decorators.js';
 
 import type { CameraManager } from '../../camera-manager/manager.js';
-import { EventLabelProvider } from '../../components-lib/viewer/event-labels.js';
+import {
+  EventLabelProvider,
+  formatEventLabels,
+  type EventLabels,
+} from '../../components-lib/viewer/event-labels.js';
 import { fireAdvancedCameraCardEvent } from '../../utils/fire-advanced-camera-card-event.js';
 import { Timer } from '../../utils/timer.js';
 import type { ViewMedia } from '../../view/item.js';
@@ -30,7 +34,7 @@ export class AdvancedCameraCardViewerFootageTime extends LitElement {
   private _time: Date | null = null;
 
   @state()
-  private _labels: string[] = [];
+  private _labels = '';
 
   private _labelProvider = new EventLabelProvider();
   private _timer = new Timer();
@@ -52,7 +56,7 @@ export class AdvancedCameraCardViewerFootageTime extends LitElement {
     const position = (await this.getPosition?.()) ?? null;
     if (!media || !this.cameraManager) {
       this._setTime(null);
-      this._setLabels([]);
+      this._setLabels({ what: [], where: [] });
       return;
     }
     if (position === null) {
@@ -77,10 +81,8 @@ export class AdvancedCameraCardViewerFootageTime extends LitElement {
     }
   }
 
-  private _setLabels(labels: string[]): void {
-    if (labels.join() !== this._labels.join()) {
-      this._labels = labels;
-    }
+  private _setLabels(labels: EventLabels): void {
+    this._labels = formatEventLabels(labels);
   }
 
   private _setTime(time: Date | null): void {
@@ -91,9 +93,7 @@ export class AdvancedCameraCardViewerFootageTime extends LitElement {
   }
 
   protected render(): TemplateResult | void {
-    return html`${this._labels.length
-      ? html`<div class="labels">${this._labels.join(' • ')}</div>`
-      : ''}
+    return html`${this._labels ? html`<div class="labels">${this._labels}</div>` : ''}
     ${this._time
       ? html`<div class="time">${format(this._time, 'EEE, MMM d, h:mm:ss a')}</div>`
       : ''}`;

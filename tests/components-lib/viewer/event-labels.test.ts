@@ -3,7 +3,10 @@ import { mock } from 'vitest-mock-extended';
 
 import type { CameraManager } from '../../../src/camera-manager/manager';
 import type { ReviewQuery } from '../../../src/camera-manager/types';
-import { EventLabelProvider } from '../../../src/components-lib/viewer/event-labels';
+import {
+  EventLabelProvider,
+  formatEventLabels,
+} from '../../../src/components-lib/viewer/event-labels';
 import { ViewMediaType } from '../../../src/view/item';
 import { TestViewMedia } from '../../view/test-utils';
 
@@ -28,9 +31,34 @@ describe('EventLabelProvider', () => {
     const cameraManager = createCameraManager();
 
     expect(await new EventLabelProvider().getLabels(media, null, cameraManager)).toEqual(
-      ['person', 'car', 'bob'],
+      { what: ['bob', 'car'], where: [] },
     );
     expect(cameraManager.executeMediaQueries).not.toHaveBeenCalled();
+  });
+
+  it('should name a recognized person and include where on a review', async () => {
+    const media = new TestViewMedia({
+      mediaType: ViewMediaType.Review,
+      what: ['person-verified', 'car'],
+      tags: ['winsor'],
+      where: ['front_yard', 'front_porch'],
+    });
+
+    const labels = await new EventLabelProvider().getLabels(
+      media,
+      null,
+      createCameraManager(),
+    );
+    expect(labels).toEqual({
+      what: ['winsor', 'car'],
+      where: ['front_yard', 'front_porch'],
+    });
+    expect(formatEventLabels(labels)).toBe('winsor • car · Front Yard, Front Porch');
+  });
+
+  it('should format labels without where', () => {
+    expect(formatEventLabels({ what: ['person'], where: [] })).toBe('person');
+    expect(formatEventLabels({ what: [], where: [] })).toBe('');
   });
 
   it('should use the labels of a review', async () => {
@@ -41,7 +69,7 @@ describe('EventLabelProvider', () => {
 
     expect(
       await new EventLabelProvider().getLabels(media, null, createCameraManager()),
-    ).toEqual(['dog']);
+    ).toEqual({ what: ['dog'], where: [] });
   });
 
   it('should use every label of the reviews at the time of a recording', async () => {
@@ -62,7 +90,7 @@ describe('EventLabelProvider', () => {
 
     expect(
       await new EventLabelProvider().getLabels(createRecording(), time, cameraManager),
-    ).toEqual(['person', 'car']);
+    ).toEqual({ what: ['person', 'car'], where: [] });
     expect(cameraManager.generateDefaultReviewQueries).toHaveBeenCalledWith(
       'camera',
       expect.objectContaining({ start: new Date('2026-10-31T14:50:00') }),
@@ -100,7 +128,7 @@ describe('EventLabelProvider', () => {
         null,
         createCameraManager(),
       ),
-    ).toEqual([]);
+    ).toEqual({ what: [], where: [] });
   });
 
   it('should have no labels when reviews cannot be fetched', async () => {
@@ -109,6 +137,6 @@ describe('EventLabelProvider', () => {
 
     expect(
       await new EventLabelProvider().getLabels(createRecording(), time, cameraManager),
-    ).toEqual([]);
+    ).toEqual({ what: [], where: [] });
   });
 });

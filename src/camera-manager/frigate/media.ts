@@ -201,6 +201,9 @@ export class FrigateReviewViewMedia extends ViewMedia implements ReviewViewMedia
   public getWhat(): string[] | null {
     return this._review.data.objects ?? null;
   }
+  public getTags(): string[] | null {
+    return this._review.data.sub_labels?.length ? this._review.data.sub_labels : null;
+  }
   public getWhere(): string[] | null {
     const zones = this._review.data.zones;
     return zones?.length ? zones : null;
