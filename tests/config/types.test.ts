@@ -98,6 +98,7 @@ describe('config defaults', () => {
         controls: {
           builtin: true,
           tap_to_play_pause: false,
+          live_label: true,
           call: {
             button_size: 40,
             enabled: true,
@@ -123,9 +124,12 @@ describe('config defaults', () => {
           thumbnails: {
             style: 'auto',
             mode: 'right',
+            order: 'newest_first',
+            start_offset: 2,
             show_download_control: false,
             show_favorite_control: true,
             show_info_control: true,
+            show_duration: false,
             show_timeline_control: false,
             size: 100,
           },
@@ -171,6 +175,7 @@ describe('config defaults', () => {
             show_download_control: false,
             show_favorite_control: true,
             show_info_control: true,
+            show_duration: false,
             show_timeline_control: false,
             size: 100,
           },
@@ -185,6 +190,8 @@ describe('config defaults', () => {
           builtin: true,
           back_to_live: false,
           tap_to_play_pause: false,
+          footage_time: true,
+          event_tags: true,
           next_previous: {
             auto_hide: ['casting'],
             size: 48,
@@ -203,9 +210,12 @@ describe('config defaults', () => {
           thumbnails: {
             style: 'auto',
             mode: 'right',
+            order: 'newest_first',
+            start_offset: 2,
             show_download_control: false,
             show_favorite_control: true,
             show_info_control: true,
+            show_duration: false,
             show_timeline_control: false,
             size: 100,
           },
@@ -490,9 +500,12 @@ describe('config defaults', () => {
           thumbnails: {
             style: 'auto',
             mode: 'right',
+            order: 'newest_first',
+            start_offset: 2,
             show_download_control: false,
             show_favorite_control: true,
             show_info_control: true,
+            show_duration: false,
             show_timeline_control: false,
             size: 100,
           },

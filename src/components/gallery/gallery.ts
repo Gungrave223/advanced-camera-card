@@ -171,6 +171,7 @@ export class AdvancedCameraCardGallery extends LitElement {
             .show_download_control}
           ?show_info_control=${!!this.galleryConfig?.controls.thumbnails
             .show_info_control}
+          ?show_duration=${!!this.galleryConfig?.controls.thumbnails.show_duration}
           .filterFavorite=${filterFavorite}
           .actionHandler=${actionHandler({ hasHold: true })}
           @action=${(ev: CustomEvent<Interaction>) => {

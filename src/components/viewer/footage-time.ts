@@ -30,6 +30,14 @@ export class AdvancedCameraCardViewerFootageTime extends LitElement {
   @property({ attribute: false })
   public getPosition?: () => Promise<number | null>;
 
+  // The time is still worked out (for the timeline playhead) when it is not
+  // shown.
+  @property({ attribute: false })
+  public showTime = true;
+
+  @property({ attribute: false })
+  public showLabels = true;
+
   @state()
   private _time: Date | null = null;
 
@@ -93,8 +101,10 @@ export class AdvancedCameraCardViewerFootageTime extends LitElement {
   }
 
   protected render(): TemplateResult | void {
-    return html`${this._labels ? html`<div class="labels">${this._labels}</div>` : ''}
-    ${this._time
+    return html`${this.showLabels && this._labels
+      ? html`<div class="labels">${this._labels}</div>`
+      : ''}
+    ${this.showTime && this._time
       ? html`<div class="time">${format(this._time, 'EEE, MMM d, h:mm:ss a')}</div>`
       : ''}`;
   }

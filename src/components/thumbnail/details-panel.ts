@@ -47,11 +47,14 @@ export class AdvancedCameraCardThumbnailDetailsPanel extends LitElement {
   @property({ attribute: false })
   public filterFavorite?: boolean;
 
+  @property({ attribute: false })
+  public showDuration = false;
+
   private _controller = new ThumbnailDetailsPanelController();
 
   protected willUpdate(changedProperties: PropertyValues): void {
     if (
-      ['item', 'seek', 'cameraManager', 'size'].some((prop) =>
+      ['item', 'seek', 'cameraManager', 'size', 'showDuration'].some((prop) =>
         changedProperties.has(prop),
       )
     ) {
@@ -60,6 +63,7 @@ export class AdvancedCameraCardThumbnailDetailsPanel extends LitElement {
         item: this.item,
         seek: this.seek,
         size: this.size,
+        showDuration: this.showDuration,
       });
       this.setAttribute('tier', this._controller.getTier());
     }

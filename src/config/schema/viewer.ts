@@ -32,6 +32,8 @@ export const viewerConfigDefault = {
     builtin: true,
     back_to_live: false,
     tap_to_play_pause: false,
+    footage_time: true,
+    event_tags: true,
     next_previous: {
       auto_hide: ['casting' as const],
       size: 48,
@@ -100,6 +102,8 @@ export const viewerConfigSchema = z
         tap_to_play_pause: z
           .boolean()
           .default(viewerConfigDefault.controls.tap_to_play_pause),
+        footage_time: z.boolean().default(viewerConfigDefault.controls.footage_time),
+        event_tags: z.boolean().default(viewerConfigDefault.controls.event_tags),
         next_previous: viewerNextPreviousControlConfigSchema.default(
           viewerConfigDefault.controls.next_previous,
         ),

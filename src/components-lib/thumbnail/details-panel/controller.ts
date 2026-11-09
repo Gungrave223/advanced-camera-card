@@ -7,6 +7,7 @@ import type { ViewItem } from '../../../view/item';
 import { ViewItemClassifier } from '../../../view/item-classifier';
 import {
   getMediaCameraTitle,
+  getMediaDuration,
   getMediaLabel,
   getMediaTags,
   getMediaWhere,
@@ -35,6 +36,9 @@ export interface ThumbnailDetailsPanelOptions {
   item?: ViewItem;
   seek?: Date;
   size?: number;
+
+  // Whether to show how long the media lasted (on the line after the time).
+  showDuration?: boolean;
 }
 
 export interface ThumbnailDetailsPanelTime {
@@ -75,6 +79,9 @@ export class ThumbnailDetailsPanelController {
 
     this._fitLines(
       this._groupLines({
+        duration: options.showDuration
+          ? getMediaDuration(options.item, { excludeInProgress: true })
+          : null,
         camera: cameraTitle === this._label ? null : cameraTitle,
         where: getMediaWhere(options.item),
         tags: getMediaTags(options.item),
@@ -83,15 +90,16 @@ export class ThumbnailDetailsPanelController {
   }
 
   // One value per line, below the heading (the label) and the day and time
-  // line: the camera, then where it happened, then any tags. How long the media
-  // lasted is left out.
+  // line: how long the media lasted (only when asked for), the camera, where it
+  // happened, then any tags.
   private _groupLines(values: {
+    duration: string | null;
     camera: string | null;
     where: string | null;
     tags: string | null;
   }): string[][] {
-    const { camera, where, tags } = values;
-    return [[camera], [where], [tags]]
+    const { duration, camera, where, tags } = values;
+    return [[duration], [camera], [where], [tags]]
       .map((line) => line.filter(isTruthy))
       .filter((line) => line.length);
   }

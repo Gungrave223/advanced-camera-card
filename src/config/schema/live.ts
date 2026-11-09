@@ -128,6 +128,7 @@ export const liveConfigDefault = {
   controls: {
     builtin: true,
     tap_to_play_pause: false,
+    live_label: true,
     call: { ...callConfigDefault },
     next_previous: {
       auto_hide: ['call' as const, 'casting' as const],
@@ -168,6 +169,7 @@ export const liveConfigSchema = z
         tap_to_play_pause: z
           .boolean()
           .default(liveConfigDefault.controls.tap_to_play_pause),
+        live_label: z.boolean().default(liveConfigDefault.controls.live_label),
         call: callConfigSchema.default(liveConfigDefault.controls.call),
         next_previous: nextPreviousControlConfigSchema
           .extend({

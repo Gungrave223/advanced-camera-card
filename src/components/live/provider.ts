@@ -484,7 +484,7 @@ export class AdvancedCameraCardLiveProvider extends LitElement implements MediaP
                   </advanced-camera-card-live-jsmpeg>`
                 : html``}
     `)}
-    ${mediaLoaded && provider !== 'image'
+    ${mediaLoaded && provider !== 'image' && this.liveConfig?.controls.live_label
       ? html`<div class="live-label">${localize('editor.live')}</div>`
       : ''}
     ${failure || mediaLoaded

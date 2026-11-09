@@ -110,6 +110,10 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
           `${this.config.size}px`,
         );
       }
+      this.style.setProperty(
+        '--advanced-camera-card-thumbnails-start-offset',
+        String(this.config?.start_offset ?? 2),
+      );
       const direction = this._getDirection();
       if (direction) {
         this.setAttribute('direction', direction);
@@ -150,7 +154,10 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
     }
     const hasUpFolder = !!getUpFolderItem(this._getFolderNavOptions());
     const resultCount = view?.queryResults?.getResults()?.length ?? 0;
-    const displayIndex = resultCount - 1 - selectedIndex;
+    const displayIndex =
+      this.config?.order === 'oldest_first'
+        ? selectedIndex
+        : resultCount - 1 - selectedIndex;
     return hasUpFolder ? displayIndex + 1 : displayIndex;
   }
 
@@ -204,6 +211,7 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
       ?show_timeline_control=${this.config?.show_timeline_control}
       ?show_download_control=${this.config?.show_download_control}
       ?show_info_control=${this.config?.show_info_control}
+      ?show_duration=${this.config?.show_duration}
       .actionHandler=${actionHandler({ hasHold: true })}
       @action=${(ev: CustomEvent<Interaction>) => {
         stopEventFromActivatingCardWideActions(ev);
@@ -239,10 +247,11 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
 
     const events = this._recordingEvents.getEvents(view);
 
-    // Thumbnails show the most recent media first (the query results place the
-    // most recent media at the end for use in the viewer).
+    // By default the thumbnails show the most recent media first (the query
+    // results place the most recent media at the end for use in the viewer).
     const items = events ?? view?.queryResults?.getResults() ?? [];
-    for (const item of [...items].reverse()) {
+    const ordered = this.config?.order === 'oldest_first' ? items : [...items].reverse();
+    for (const item of ordered) {
       const clickHandler = (item: ViewItem, ev: Event) => {
         stopEventFromActivatingCardWideActions(ev);
         if (events && ViewItemClassifier.isMedia(item)) {

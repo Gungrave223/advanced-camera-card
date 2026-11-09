@@ -48,6 +48,7 @@ const createThumbnailConfig = (
   show_timeline_control: true,
   show_download_control: true,
   show_info_control: true,
+  show_duration: false,
   ...config,
 });
 

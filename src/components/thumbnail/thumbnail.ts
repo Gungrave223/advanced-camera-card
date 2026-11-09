@@ -70,6 +70,9 @@ export class AdvancedCameraCardThumbnail extends LitElement {
   @property({ attribute: true, type: Boolean })
   public show_info_control = false;
 
+  @property({ attribute: true, type: Boolean })
+  public show_duration = false;
+
   @property({ attribute: false })
   public filterFavorite?: boolean;
 
@@ -165,6 +168,7 @@ export class AdvancedCameraCardThumbnail extends LitElement {
             .viewManagerEpoch=${this.viewManagerEpoch}
             .filterFavorite=${this.filterFavorite}
             .size=${this.size}
+            .showDuration=${this.show_duration}
           ></advanced-camera-card-thumbnail-details-panel>`
         : ''}
       <div class="ring"></div>
