@@ -89,14 +89,15 @@ export class AdvancedCameraCardThumbnailDetailsPanel extends LitElement {
             ><span class="label">${localize('thumbnail.in_progress')}</span></span
           >`
         : ''}
-      ${label || time
-        ? html`<div class="heading">
-            ${label ? html`<span title=${label}>${label}</span>` : ''}
-            ${time
-              ? html`<span class="time" dir="ltr"
-                  >${time.hoursMinutes}<span class="seconds">${time.seconds}</span></span
-                >`
-              : ''}
+      ${label
+        ? html`<div class="heading"><span title=${label}>${label}</span></div>`
+        : ''}
+      ${time
+        ? html`<div class="when">
+            <span>${time.day}</span>
+            <span class="time" dir="ltr"
+              >${time.hoursMinutes}<span class="seconds">${time.seconds}</span></span
+            >
           </div>`
         : ''}
       ${details.map((detail) => html`<div><span title=${detail}>${detail}</span></div>`)}

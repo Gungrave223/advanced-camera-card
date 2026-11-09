@@ -79,6 +79,15 @@ div {
   opacity: 0.55;
 }
 
+.when {
+  gap: 0.4em;
+
+  // Left-aligned under the label, not pushed to the end of the line.
+  .time {
+    margin-inline-start: 0;
+  }
+}
+
 .in-progress {
   @include in-progress;
 

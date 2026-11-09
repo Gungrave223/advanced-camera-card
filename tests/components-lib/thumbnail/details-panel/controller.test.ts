@@ -34,30 +34,32 @@ const createController = (
 };
 
 describe('ThumbnailDetailsPanelController', () => {
-  it('should join the values onto a line each', () => {
+  it('should put the camera, where and tags on a line each', () => {
     const controller = createController(300);
 
     expect(controller.getTier()).toBe('poster');
     expect(controller.getLabel()).toBe('Person');
-    expect(controller.getDetails()).toEqual([
-      '2026-09-08 · 41s',
-      'Office · Driveway',
-      'Delivery',
-    ]);
+    expect(controller.getDetails()).toEqual(['Office', 'Driveway', 'Delivery']);
     expect(controller.getHiddenDetailCount()).toBe(0);
   });
 
-  it('should show the start time beside the heading rather than among the details', () => {
+  it('should leave out how long the media lasted', () => {
+    expect(createController(300).getDetails().join()).not.toContain('41s');
+  });
+
+  it('should give the day and time a line of their own', () => {
     const controller = createController(300);
 
-    expect(controller.getTime()).toEqual({ hoursMinutes: '16:55', seconds: ':47' });
+    expect(controller.getTime()).toEqual({
+      day: '2026-09-08',
+      hoursMinutes: '16:55',
+      seconds: ':47',
+    });
     expect(controller.getDetails().join()).not.toContain('16:55');
   });
 
   it('should show no time for media that does not say when it starts', () => {
-    const controller = createController(300, new TestViewMedia());
-
-    expect(controller.getTime()).toBeNull();
+    expect(createController(300, new TestViewMedia()).getTime()).toBeNull();
   });
 
   it('should show no time for a folder, which has no start at all', () => {
@@ -66,22 +68,33 @@ describe('ThumbnailDetailsPanelController', () => {
     expect(controller.getTime()).toBeNull();
   });
 
-  it('should pack more onto each line where the panel has fewer of them', () => {
-    const controller = createController(75);
-
-    expect(controller.getTier()).toBe('compact');
-    expect(controller.getDetails()).toEqual([
-      '2026-09-08 · 41s · Office',
-      'Driveway · Delivery',
-    ]);
-    expect(controller.getHiddenDetailCount()).toBe(0);
-  });
-
-  it.each([[100], [175], [300]])('should show every value at size %s', (size) => {
+  it.each([[175], [300]])('should show every value at size %s', (size) => {
     const controller = createController(size);
 
     expect(controller.getDetails()).toHaveLength(3);
     expect(controller.getHiddenDetailCount()).toBe(0);
+  });
+
+  it('should hide what does not fit behind the chip on a small thumbnail', () => {
+    // The standard panel shows four lines: the label, the time, one value and
+    // the chip that reaches the two left over.
+    const controller = createController(100);
+
+    expect(controller.getDetails()).toEqual(['Office']);
+    expect(controller.getHiddenDetailCount()).toBe(2);
+  });
+
+  it('should skip the zone line when there is no zone', () => {
+    const controller = createController(
+      300,
+      new TestViewMedia({
+        cameraID: 'camera_1',
+        startTime: new Date('2026-09-08T16:55:47'),
+        what: ['person'],
+      }),
+    );
+
+    expect(controller.getDetails()).toEqual(['Office']);
   });
 
   it('should not repeat a camera title the heading already carries', () => {
@@ -95,7 +108,7 @@ describe('ThumbnailDetailsPanelController', () => {
     );
 
     expect(controller.getLabel()).toBe('Office');
-    expect(controller.getDetails()).toEqual(['2026-09-08 · 41s']);
+    expect(controller.getDetails()).toEqual([]);
   });
 
   describe('should name the day the media starts', () => {
@@ -117,13 +130,11 @@ describe('ThumbnailDetailsPanelController', () => {
       });
 
     it.each([
-      ['2026-09-10', 'Today · 41s'],
-      ['2026-09-09', 'Yesterday · 41s'],
-      ['2026-09-08', '2026-09-08 · 41s'],
+      ['2026-09-10', 'Today'],
+      ['2026-09-09', 'Yesterday'],
+      ['2026-09-08', '2026-09-08'],
     ])('should name %s as %s', (day, expected) => {
-      const controller = createController(300, createEventOn(day));
-
-      expect(controller.getDetails()[0]).toBe(expected);
+      expect(createController(300, createEventOn(day)).getTime()?.day).toBe(expected);
     });
   });
 
@@ -148,8 +159,7 @@ describe('ThumbnailDetailsPanelController', () => {
   it('should give the seek time a line of the budget', () => {
     const controller = new ThumbnailDetailsPanelController();
 
-    // The standard panel shows four lines: the heading, the seek time, one
-    // line of values and the chip that reaches the three left over.
+    // Standard: label + time + seek + chip, so no value line is left.
     controller.calculate({
       cameraManager: createCameraManagerWithMetadata({
         title: 'Office',
@@ -160,7 +170,7 @@ describe('ThumbnailDetailsPanelController', () => {
       size: 100,
     });
 
-    expect(controller.getDetails()).toEqual(['2026-09-08 · 41s']);
+    expect(controller.getDetails()).toEqual([]);
     expect(controller.getHiddenDetailCount()).toBe(3);
   });
 
@@ -202,12 +212,12 @@ describe('ThumbnailDetailsPanelController', () => {
         tags: ['delivery'],
         inProgress: true,
       }),
-      size: 100,
+      size: 175,
     });
 
-    // Standard budget is 4: heading + pill + one detail line + chip.
-    expect(controller.getDetails()).toEqual(['2026-09-08 · 41s']);
-    expect(controller.getHiddenDetailCount()).toBe(3);
+    // Comfortable budget is 7: label + time + pill + the three values.
+    expect(controller.getDetails()).toEqual(['Office', 'Driveway', 'Delivery']);
+    expect(controller.getHiddenDetailCount()).toBe(0);
   });
 
   it('should give the details a line more where there is no label', () => {
@@ -223,11 +233,11 @@ describe('ThumbnailDetailsPanelController', () => {
         where: ['driveway'],
         tags: ['delivery'],
       }),
-      size: 75,
+      size: 100,
     });
 
     expect(controller.getLabel()).toBeNull();
-    expect(controller.getDetails()).toEqual(['2026-09-08 · 41s', 'Driveway · Delivery']);
+    expect(controller.getDetails()).toEqual(['Driveway', 'Delivery']);
   });
 
   it('should show nothing for media that says nothing about itself', () => {

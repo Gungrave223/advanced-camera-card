@@ -7,7 +7,6 @@ import type { ViewItem } from '../../../view/item';
 import { ViewItemClassifier } from '../../../view/item-classifier';
 import {
   getMediaCameraTitle,
-  getMediaDuration,
   getMediaLabel,
   getMediaTags,
   getMediaWhere,
@@ -39,6 +38,8 @@ export interface ThumbnailDetailsPanelOptions {
 }
 
 export interface ThumbnailDetailsPanelTime {
+  // Today, Yesterday or the date.
+  day: string;
   hoursMinutes: string;
   seconds: string;
 }
@@ -63,15 +64,17 @@ export class ThumbnailDetailsPanelController {
       ? options.item.getStartTime()
       : null;
     this._time = startTime
-      ? { hoursMinutes: format(startTime, 'HH:mm'), seconds: format(startTime, ':ss') }
+      ? {
+          day: formatDay(startTime),
+          hoursMinutes: format(startTime, 'HH:mm'),
+          seconds: format(startTime, ':ss'),
+        }
       : null;
 
     const cameraTitle = getMediaCameraTitle(options.cameraManager, options.item);
 
     this._fitLines(
       this._groupLines({
-        date: startTime ? formatDay(startTime) : null,
-        duration: getMediaDuration(options.item, { excludeInProgress: true }),
         camera: cameraTitle === this._label ? null : cameraTitle,
         where: getMediaWhere(options.item),
         tags: getMediaTags(options.item),
@@ -79,32 +82,25 @@ export class ThumbnailDetailsPanelController {
     );
   }
 
-  // Groups the values into the lines they are shown on. The compact panel has
-  // room for two lines, every other panel for three.
+  // One value per line, below the heading (the label) and the day and time
+  // line: the camera, then where it happened, then any tags. How long the media
+  // lasted is left out.
   private _groupLines(values: {
-    date: string | null;
-    duration: string | null;
     camera: string | null;
     where: string | null;
     tags: string | null;
   }): string[][] {
-    const { date, duration, camera, where, tags } = values;
-
-    const lines =
-      this._tier === 'compact'
-        ? [
-            [date, duration, camera],
-            [where, tags],
-          ]
-        : [[date, duration], [camera, where], [tags]];
-
-    return lines.map((line) => line.filter(isTruthy)).filter((line) => line.length);
+    const { camera, where, tags } = values;
+    return [[camera], [where], [tags]]
+      .map((line) => line.filter(isTruthy))
+      .filter((line) => line.length);
   }
 
   private _fitLines(lines: string[][]): void {
     const available =
       LINES_BY_TIER[this._tier] -
       (this._label ? 1 : 0) -
+      (this._time ? 1 : 0) -
       (this._isInProgress ? 1 : 0) -
       (this._seekTime ? 1 : 0);
 

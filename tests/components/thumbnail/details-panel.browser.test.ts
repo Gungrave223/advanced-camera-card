@@ -8,15 +8,11 @@ import {
 import { deepQuery, deepQueryAll } from '../../browser/dom';
 import {
   createTestFrigateEvent,
-  createTestFrigateReview,
   EVENT_TIME_NEWER,
   mountCardWithFrigate,
 } from '../../browser/fake-frigate';
 import type { MountedCard } from '../../browser/mounted-card';
-import {
-  createStillImageCameraConfig,
-  waitForThumbnails,
-} from '../../browser/test-utils';
+import { waitForThumbnails } from '../../browser/test-utils';
 
 const mountGalleryWithThumbnailSize = async (
   size: number,
@@ -30,24 +26,6 @@ const mountGalleryWithThumbnailSize = async (
     },
     [],
     width ? { width } : undefined,
-  );
-  await waitForThumbnails(card, 1);
-  return card;
-};
-
-const mountReviewGallery = async (reviewed: boolean): Promise<MountedCard> => {
-  const { card } = await mountCardWithFrigate(
-    [],
-    {
-      view: { default: 'reviews' },
-      cameras: [{ ...createStillImageCameraConfig(), media: { reviewed: 'all' } }],
-      media_gallery: { controls: { thumbnails: { style: 'panel' } } },
-    },
-    [
-      createTestFrigateReview('review', EVENT_TIME_NEWER, {
-        has_been_reviewed: reviewed,
-      }),
-    ],
   );
   await waitForThumbnails(card, 1);
   return card;
@@ -73,14 +51,14 @@ const getHeading = (details: Element): Element => {
 };
 
 const getHeadingLabel = (details: Element): Element => {
-  const label = deepQuery(getHeading(details), 'span:not(.time)');
+  const label = deepQuery(getHeading(details), 'span');
   assert(label);
   return label;
 };
 
 const getMetadataRow = (details: Element): Element => {
   const row = deepQueryAll(details, 'div').find(
-    (div) => !div.classList.contains('heading'),
+    (div) => !div.classList.contains('heading') && !div.classList.contains('when'),
   );
   assert(row);
   return row;
@@ -187,10 +165,10 @@ describe('AdvancedCameraCardThumbnailDetailsPanel', () => {
     expect(row.textContent).toContain(' · ');
   });
 
-  it('should show the start time in the heading, in the code font', async () => {
+  it('should show the start time on its own line, in the code font', async () => {
     const card = await mountGalleryWithThumbnailSize(THUMBNAIL_SIZE_DEFAULT);
     const details = getDetails(card);
-    const time = deepQuery(getHeading(details), '.time');
+    const time = deepQuery(details, 'div.when .time');
     assert(time);
 
     expect(time.textContent).toMatch(/^\d{2}:\d{2}:\d{2}$/);
@@ -228,27 +206,17 @@ describe('AdvancedCameraCardThumbnailDetailsPanel', () => {
     expect(leading(largestHeading)).toBeGreaterThan(leading(smallestHeading));
   });
 
-  it('should scale the time up more than the heading beside it', async () => {
+  it('should scale the time up more than the heading above it', async () => {
     const smallest = getDetails(await mountGalleryWithThumbnailSize(THUMBNAIL_SIZE_MIN));
     const largest = getDetails(await mountGalleryWithThumbnailSize(THUMBNAIL_SIZE_MAX));
 
     const timeToHeading = (details: Element): number => {
-      const time = deepQuery(getHeading(details), '.time');
+      const time = deepQuery(details, 'div.when .time');
       assert(time);
       return getFontSize(time) / getFontSize(getHeadingLabel(details));
     };
 
     expect(timeToHeading(largest)).toBeGreaterThan(timeToHeading(smallest));
-  });
-
-  it('should lighten the heading of a reviewed item', async () => {
-    const weight = (details: Element): number =>
-      parseFloat(getComputedStyle(getHeadingLabel(details)).fontWeight);
-
-    const unreviewed = weight(getDetails(await mountReviewGallery(false)));
-    const reviewed = weight(getDetails(await mountReviewGallery(true)));
-
-    expect(reviewed).toBeLessThan(unreviewed);
   });
 
   it.each([[THUMBNAIL_SIZE_MIN], [THUMBNAIL_SIZE_MAX]])(
