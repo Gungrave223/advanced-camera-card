@@ -1,0 +1,131 @@
+import type { CameraManager } from '../../camera-manager/manager';
+import type { ViewItemManager } from '../../card-controller/view/item-manager';
+import type { ViewManagerEpoch } from '../../card-controller/view/types';
+import type {
+  InternalNotification,
+  InternalNotificationControl,
+  NotificationDetail,
+} from '../../config/schema/actions/types';
+import type { HomeAssistant } from '../../ha/types';
+import { localize } from '../../localize/localize';
+import { createInternalCallbackAction } from '../../utils/action';
+import {
+  downloadMedia,
+  navigateToTimeline,
+  toggleFavorite,
+} from '../../utils/media-actions';
+import type { ViewItem } from '../../view/item';
+import { ViewItemClassifier } from '../../view/item-classifier';
+import type { ViewItemCapabilities } from '../../view/types';
+import { getMediaHeading, getMediaSeekDetail, getNotificationDetails } from './detail';
+
+export interface MediaNotificationOptions {
+  cameraManager?: CameraManager;
+  seek?: Date;
+}
+
+export interface NotificationControlsContext {
+  hass?: HomeAssistant;
+  viewItemManager?: ViewItemManager;
+  viewManagerEpoch?: ViewManagerEpoch;
+  capabilities?: ViewItemCapabilities | null;
+
+  // Whether to filter favorite/non-favorite items after changing the favorite
+  // state.
+  filterFavorite?: boolean;
+}
+
+export class MediaNotificationController {
+  private _item: ViewItem;
+  private _metadata: NotificationDetail[] = [];
+  private _heading: NotificationDetail | null = null;
+
+  constructor(item: ViewItem) {
+    this._item = item;
+  }
+
+  public calculate(options?: MediaNotificationOptions): void {
+    const detailOptions = { cameraManager: options?.cameraManager, item: this._item };
+
+    this._heading = getMediaHeading(detailOptions);
+
+    const seekDetail = getMediaSeekDetail(options?.seek);
+    this._metadata = [
+      ...getNotificationDetails(detailOptions),
+      ...(seekDetail ? [seekDetail] : []),
+    ];
+  }
+
+  public getNotification(context?: NotificationControlsContext): InternalNotification {
+    const description = ViewItemClassifier.isMedia(this._item)
+      ? this._item.getDescription()
+      : null;
+
+    return {
+      heading: this._heading ?? undefined,
+      controls: context ? this._getControls(context) : undefined,
+      metadata: this._metadata,
+      body: description ? { text: description } : undefined,
+    };
+  }
+
+  private _getControls(
+    context: NotificationControlsContext,
+  ): InternalNotificationControl[] {
+    const controls: InternalNotificationControl[] = [];
+    const item = this._item;
+
+    if (context.capabilities?.canFavorite && ViewItemClassifier.isMedia(item)) {
+      const isFavorite = item.isFavorite();
+      controls.push({
+        tooltip: localize('thumbnail.retain_indefinitely'),
+        icon: isFavorite ? 'mdi:star' : 'mdi:star-outline',
+        ...(isFavorite && { className: 'favorited' }),
+        actions: {
+          tap_action: createInternalCallbackAction(async (api) => {
+            const success = await toggleFavorite(
+              item,
+              context.viewItemManager,
+              context.viewManagerEpoch,
+              context.filterFavorite,
+            );
+            if (success) {
+              api
+                .getNotificationManager()
+                .setNotification(this.getNotification(context));
+            }
+          }),
+        },
+        dismiss: false,
+      });
+    }
+
+    if (context.capabilities?.canDownload && item.getID()) {
+      controls.push({
+        tooltip: localize('thumbnail.download'),
+        icon: 'mdi:download',
+        dismiss: true,
+        actions: {
+          tap_action: createInternalCallbackAction(async () => {
+            await downloadMedia(item, context.viewItemManager);
+          }),
+        },
+      });
+    }
+
+    if (ViewItemClassifier.supportsTimeline(item) && context.viewManagerEpoch) {
+      controls.push({
+        tooltip: localize('thumbnail.timeline'),
+        icon: 'mdi:target',
+        dismiss: true,
+        actions: {
+          tap_action: createInternalCallbackAction(async () => {
+            navigateToTimeline(item, context.viewManagerEpoch);
+          }),
+        },
+      });
+    }
+
+    return controls;
+  }
+}

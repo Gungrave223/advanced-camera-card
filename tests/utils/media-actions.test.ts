@@ -8,12 +8,38 @@ import type { ViewManager } from '../../src/card-controller/view/view-manager';
 import {
   downloadMedia,
   navigateToTimeline,
+  showMediaInfoNotification,
   toggleFavorite,
 } from '../../src/utils/media-actions';
 import { ViewMediaType, type ViewItem } from '../../src/view/item';
-import type { QueryResults } from '../../src/view/query-results';
+import { QueryResults } from '../../src/view/query-results';
 import type { View } from '../../src/view/view';
-import { TestViewMedia } from '../view/test-utils';
+import { createView, TestViewMedia } from '../view/test-utils';
+
+const createViewManagerWithResults = (
+  results: ViewItem[],
+): { viewManager: ViewManager; viewManagerEpoch: ViewManagerEpoch } => {
+  const viewManager = mock<ViewManager>();
+  const viewManagerEpoch = mock<ViewManagerEpoch>();
+  const view = mock<View>();
+
+  viewManagerEpoch.manager = viewManager;
+  viewManager.getView.mockReturnValue(view);
+  view.queryResults = new QueryResults({ results });
+
+  return { viewManager, viewManagerEpoch };
+};
+
+const getQueryResultsAfterModifiers = (
+  viewManager: ViewManager,
+): QueryResults | null => {
+  const modifiers = vi.mocked(viewManager.setViewWithModifiers).mock.calls[0]?.[0] ?? [];
+  const view = createView({
+    queryResults: viewManager.getView()?.queryResults?.clone() ?? null,
+  });
+  modifiers.forEach((modifier) => modifier.modify(view));
+  return view.queryResults;
+};
 
 describe('MediaActions', () => {
   describe('toggleFavorite', () => {
@@ -40,6 +66,61 @@ describe('MediaActions', () => {
 
       expect(await toggleFavorite(item, viewItemManager)).toBe(true);
       expect(viewItemManager.favorite).toHaveBeenCalledWith(item, true);
+    });
+
+    it('should update the item in the view', async () => {
+      const item = new TestViewMedia({
+        id: 'clip-1',
+        mediaType: ViewMediaType.Clip,
+        favorite: false,
+      });
+      const viewItemManager = mock<ViewItemManager>();
+      const { viewManager, viewManagerEpoch } = createViewManagerWithResults([item]);
+
+      expect(await toggleFavorite(item, viewItemManager, viewManagerEpoch)).toBe(true);
+
+      const results = getQueryResultsAfterModifiers(viewManager)?.getResults();
+      expect(results?.[0]).not.toBe(item);
+      expect(results?.[0]?.getID()).toBe('clip-1');
+    });
+
+    it('should remove an un-favorited item from a favorites-only gallery', async () => {
+      const item = new TestViewMedia({
+        id: 'clip-1',
+        mediaType: ViewMediaType.Clip,
+        favorite: true,
+      });
+      const other = new TestViewMedia({ id: 'clip-2', mediaType: ViewMediaType.Clip });
+      const viewItemManager = mock<ViewItemManager>();
+      const { viewManager, viewManagerEpoch } = createViewManagerWithResults([
+        item,
+        other,
+      ]);
+
+      expect(await toggleFavorite(item, viewItemManager, viewManagerEpoch, true)).toBe(
+        true,
+      );
+
+      expect(viewItemManager.favorite).toHaveBeenCalledWith(item, false);
+      expect(getQueryResultsAfterModifiers(viewManager)?.getResults()).toEqual([other]);
+    });
+
+    it('should keep a favorited item in a favorites-only gallery', async () => {
+      const item = new TestViewMedia({
+        id: 'clip-1',
+        mediaType: ViewMediaType.Clip,
+        favorite: false,
+      });
+      const viewItemManager = mock<ViewItemManager>();
+      const { viewManager, viewManagerEpoch } = createViewManagerWithResults([item]);
+
+      expect(await toggleFavorite(item, viewItemManager, viewManagerEpoch, true)).toBe(
+        true,
+      );
+
+      const results = getQueryResultsAfterModifiers(viewManager)?.getResults();
+      expect(results?.[0]).not.toBe(item);
+      expect(results?.[0]?.getID()).toBe('clip-1');
     });
 
     it('should handle manager error', async () => {
@@ -87,6 +168,32 @@ describe('MediaActions', () => {
       expect(consoleSpy).toHaveBeenCalledWith(error.message);
 
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe('showMediaInfo', () => {
+    it('should dispatch an action to open a notification', () => {
+      const host = mock<HTMLElement>();
+      const item = new TestViewMedia({
+        mediaType: ViewMediaType.Clip,
+        what: ['person'],
+      });
+
+      showMediaInfoNotification(host, item, {});
+
+      expect(host.dispatchEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          detail: expect.objectContaining({
+            actions: [
+              expect.objectContaining({
+                notification: expect.objectContaining({
+                  heading: expect.objectContaining({ text: 'Person' }),
+                }),
+              }),
+            ],
+          }),
+        }),
+      );
     });
   });
 

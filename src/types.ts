@@ -233,6 +233,7 @@ export interface EffectsManagerInterface {
 // platform's event-map interfaces.
 declare global {
   interface HTMLElementEventMap {
+    action: CustomEvent<Interaction>;
     'advanced-camera-card:media:loaded': CustomEvent<MediaLoadedInfoEventDetail>;
   }
 }

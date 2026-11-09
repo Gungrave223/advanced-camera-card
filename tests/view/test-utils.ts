@@ -120,9 +120,6 @@ export class TestViewMedia extends ViewMedia implements EventViewMedia, ReviewVi
   public isFavorite(): boolean | null {
     return this._favorite;
   }
-  public setFavorite(favorite: boolean): void {
-    this._favorite = favorite;
-  }
 }
 
 // jsdom does not implement `window.matchMedia`, so it has to be installed
@@ -201,8 +198,8 @@ export const createReviewQuery = (
 
 export const createFolderQuery = (folderId: string): FolderQuery => ({
   source: QuerySource.Folder,
-  folder: { id: folderId, type: 'ha', title: folderId },
-  path: [{ ha: { id: 'Root' } }],
+  folder: { id: folderId, type: 'ha', title: folderId, navigation: 'restricted' },
+  path: [{}],
 });
 
 export const isEventQuery = (node: {

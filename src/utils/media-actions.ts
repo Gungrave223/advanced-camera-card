@@ -1,13 +1,32 @@
+import type { CameraManager } from '../camera-manager/manager';
+import { dispatchActionExecutionRequest } from '../card-controller/actions/utils/execution-request';
 import type { ViewItemManager } from '../card-controller/view/item-manager';
 import { RemoveContextViewModifier } from '../card-controller/view/modifiers/remove-context';
+import { RemoveItemViewModifier } from '../card-controller/view/modifiers/remove-item';
+import { UpdateItemViewModifier } from '../card-controller/view/modifiers/update-item';
 import type { ViewManagerEpoch } from '../card-controller/view/types';
+import { MediaNotificationController } from '../components-lib/notification/media-controller';
+import type { HomeAssistant } from '../ha/types';
 import type { ViewItem } from '../view/item';
 import { ViewItemClassifier } from '../view/item-classifier';
+import { createNotificationAction } from './action';
 import { errorToConsole } from './basic';
+
+const replaceItemInView = (
+  item: ViewItem,
+  removeItem: boolean,
+  viewManagerEpoch?: ViewManagerEpoch,
+): void =>
+  viewManagerEpoch?.manager.setViewWithModifiers([
+    removeItem ? new RemoveItemViewModifier(item) : new UpdateItemViewModifier(item),
+  ]);
+
 
 export async function toggleFavorite(
   item: ViewItem,
   viewItemManager?: ViewItemManager,
+  viewManagerEpoch?: ViewManagerEpoch,
+  filterFavorite?: boolean,
 ): Promise<boolean> {
   if (!ViewItemClassifier.isMedia(item) || !viewItemManager) {
     return false;
@@ -20,6 +39,13 @@ export async function toggleFavorite(
     errorToConsole(e);
     return false;
   }
+
+  replaceItemInView(
+    item,
+    filterFavorite !== undefined && filterFavorite !== newState,
+    viewManagerEpoch,
+  );
+
   return true;
 }
 
@@ -54,8 +80,39 @@ export function navigateToTimeline(
       queryResults: viewManagerEpoch.manager
         .getView()
         ?.queryResults?.clone()
-        .selectResultIfFound((media) => media === item),
+        .selectResultIfFound((media) => item.isSameAs(media)),
     },
     modifiers: [new RemoveContextViewModifier(['timeline'])],
+  });
+}
+
+export interface MediaInfoContext {
+  hass?: HomeAssistant;
+  cameraManager?: CameraManager;
+  viewItemManager?: ViewItemManager;
+  viewManagerEpoch?: ViewManagerEpoch;
+  filterFavorite?: boolean;
+}
+
+export function showMediaInfoNotification(
+  host: HTMLElement,
+  item: ViewItem,
+  context: MediaInfoContext,
+): void {
+  const notificationController = new MediaNotificationController(item);
+  notificationController.calculate({ cameraManager: context.cameraManager });
+
+  dispatchActionExecutionRequest(host, {
+    actions: [
+      createNotificationAction(
+        notificationController.getNotification({
+          hass: context.hass,
+          viewItemManager: context.viewItemManager,
+          viewManagerEpoch: context.viewManagerEpoch,
+          capabilities: context.viewItemManager?.getCapabilities(item),
+          filterFavorite: context.filterFavorite,
+        }),
+      ),
+    ],
   });
 }

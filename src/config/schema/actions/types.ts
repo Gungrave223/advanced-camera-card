@@ -186,6 +186,10 @@ const notificationControlSchema = notificationBaseSchema.extend({
 });
 export type NotificationControl = z.infer<typeof notificationControlSchema>;
 
+export interface InternalNotificationControl extends NotificationControl {
+  className?: string;
+}
+
 // A context item is a preformatted string or a structured object that is
 // YAML-dumped at render time (see NotificationContextController).
 const notificationContextItemSchema = z.union([z.string(), z.custom<object>(isRecord)]);
@@ -201,6 +205,11 @@ const notificationSchema = z.object({
   controls: notificationControlSchema.array().optional(),
 });
 export type Notification = z.infer<typeof notificationSchema>;
+
+// Extended internally to include values that are not user-configurable.
+export interface InternalNotification extends Omit<Notification, 'controls'> {
+  controls?: InternalNotificationControl[];
+}
 
 // ============================================================================
 //                         Status Bar Elements

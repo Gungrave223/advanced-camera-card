@@ -32,6 +32,7 @@ import {
   Engine,
   QueryResultsType,
   QueryType,
+  type EventQuery,
 } from '../../../src/camera-manager/types';
 import type { CameraConfig } from '../../../src/config/schema/cameras';
 import type { RawAdvancedCameraCardConfig } from '../../../src/config/types';
@@ -616,6 +617,116 @@ describe('FrigateCameraManagerEngine', () => {
       expect(retainEvent).toHaveBeenCalledWith(hass, 'frigate', 'event-id', false);
     });
 
+    it('should favorite every copy of the event', async () => {
+      // A gallery showing both clips and snapshots runs two queries. Each
+      // parses its own copy of the event, so there are two resulting
+      // FrigateEvent objects that share an id.
+      const requestCache = new CameraManagerRequestCache();
+      const engine = createEngine({ requestCache });
+      const hass = createHASS();
+      const config = createFrigateCameraConfig();
+      const store = createStore([{ cameraID: 'camera-1', config }]);
+
+      vi.mocked(getEvents).mockImplementation(async () => [
+        createFrigateEvent({ camera: 'camera-1', id: 'event-id' }),
+        createFrigateEvent({ camera: 'camera-1', id: 'other-event-id' }),
+      ]);
+      vi.mocked(retainEvent).mockResolvedValue();
+
+      const buildQuery = (extra: Partial<EventQuery>): EventQuery => ({
+        type: QueryType.Event,
+        source: QuerySource.Camera,
+        cameraIDs: new Set(['camera-1']),
+        ...extra,
+      });
+      const generate = async (query: EventQuery): Promise<ViewMedia[]> => {
+        const results = await engine.getEvents(hass, store, query);
+        assert(results);
+        return engine.generateMediaFromEvents(
+          hass,
+          store,
+          query,
+          [...results.values()][0],
+        ) as ViewMedia[];
+      };
+
+      const clips = await generate(buildQuery({ hasClip: true }));
+      const snapshots = await generate(buildQuery({ hasSnapshot: true }));
+
+      const clip = clips[0];
+      const snapshot = snapshots[0];
+      assert(clip && snapshot);
+      expect(clip.isFavorite()).toBe(false);
+      expect(snapshot.isFavorite()).toBe(false);
+
+      await engine.favoriteMedia(hass, config, clip, true);
+
+      expect(retainEvent).toHaveBeenCalledWith(hass, 'frigate', 'event-id', true);
+      expect(clip.isFavorite()).toBe(true);
+      expect(snapshot.isFavorite()).toBe(true);
+
+      // A different event in the same results is left alone.
+      expect(clips[1]?.isFavorite()).toBe(false);
+    });
+
+    it('should favorite uncached media', async () => {
+      const clip = createClipMedia();
+      vi.mocked(retainEvent).mockResolvedValue();
+
+      await createEngine().favoriteMedia(
+        createHASS(),
+        createFrigateCameraConfig(),
+        clip,
+        false,
+      );
+
+      expect(clip.isFavorite()).toBe(false);
+    });
+
+    it('should not favorite the same id on another instance', async () => {
+      const requestCache = new CameraManagerRequestCache();
+      const engine = createEngine({ requestCache });
+      const hass = createHASS();
+      const config = createFrigateCameraConfig();
+      const otherConfig = createFrigateCameraConfig({
+        frigate: { camera_name: 'camera-2', client_id: 'other-instance' },
+      });
+      const store = createStore([
+        { cameraID: 'camera-1', config },
+        { cameraID: 'camera-2', config: otherConfig },
+      ]);
+
+      vi.mocked(getEvents).mockImplementation(async () => [
+        createFrigateEvent({ camera: 'camera-1', id: 'event-id' }),
+      ]);
+      vi.mocked(retainEvent).mockResolvedValue();
+
+      const generate = async (cameraID: string): Promise<ViewMedia[]> => {
+        const query: EventQuery = {
+          type: QueryType.Event,
+          source: QuerySource.Camera,
+          cameraIDs: new Set([cameraID]),
+        };
+        const results = await engine.getEvents(hass, store, query);
+        assert(results);
+        return engine.generateMediaFromEvents(
+          hass,
+          store,
+          query,
+          [...results.values()][0],
+        ) as ViewMedia[];
+      };
+
+      const media = (await generate('camera-1'))[0];
+      const otherMedia = (await generate('camera-2'))[0];
+      assert(media && otherMedia);
+
+      await engine.favoriteMedia(hass, config, media, true);
+
+      expect(media.isFavorite()).toBe(true);
+      expect(otherMedia.isFavorite()).toBe(false);
+    });
+
     it('should do nothing for non-frigate event media', async () => {
       const media = new ViewMedia(ViewMediaType.Clip, { cameraID: 'camera-1' });
 
@@ -812,6 +923,50 @@ describe('FrigateCameraManagerEngine', () => {
       expect(getEvents).toHaveBeenCalledTimes(2);
     });
 
+    it('should serve each instance its own cached events', async () => {
+      const engine = createEngine();
+      const config1 = createCameraConfig({
+        frigate: { camera_name: 'cam1', client_id: 'instance-1' },
+      });
+      const config2 = createCameraConfig({
+        frigate: { camera_name: 'cam2', client_id: 'instance-2' },
+      });
+      const store = createStore([
+        { cameraID: 'camera-1', config: config1 },
+        { cameraID: 'camera-2', config: config2 },
+      ]);
+      const query = {
+        type: QueryType.Event as const,
+        source: QuerySource.Camera as const,
+        cameraIDs: new Set(['camera-1', 'camera-2']),
+      };
+
+      vi.mocked(getEvents).mockImplementation(async (_hass, nativeQuery) => {
+        assert(nativeQuery);
+        return [createFrigateEvent({ id: `${nativeQuery.instance_id}-event` })];
+      });
+
+      await engine.getEvents(createHASS(), store, query);
+      const cached = await engine.getEvents(createHASS(), store, query);
+
+      // One call per instance on the first query, none on the second.
+      expect(getEvents).toHaveBeenCalledTimes(2);
+
+      assert(cached);
+      expect([...cached.values()]).toEqual([
+        expect.objectContaining({
+          instanceID: 'instance-1',
+          cached: true,
+          events: [createFrigateEvent({ id: 'instance-1-event' })],
+        }),
+        expect.objectContaining({
+          instanceID: 'instance-2',
+          cached: true,
+          events: [createFrigateEvent({ id: 'instance-2-event' })],
+        }),
+      ]);
+    });
+
     it('should send empty cameras list when camera_name is empty', async () => {
       const hass = createHASS();
       const config = createCameraConfig({
@@ -1004,6 +1159,49 @@ describe('FrigateCameraManagerEngine', () => {
       });
 
       expect(getReviews).toHaveBeenCalledTimes(1);
+    });
+
+    it('should serve each instance its own cached reviews', async () => {
+      const engine = createEngine();
+      const config1 = createCameraConfig({
+        frigate: { camera_name: 'cam1', client_id: 'instance-1' },
+      });
+      const config2 = createCameraConfig({
+        frigate: { camera_name: 'cam2', client_id: 'instance-2' },
+      });
+      const store = createStore([
+        { cameraID: 'camera-1', config: config1 },
+        { cameraID: 'camera-2', config: config2 },
+      ]);
+      const query = {
+        type: QueryType.Review as const,
+        source: QuerySource.Camera as const,
+        cameraIDs: new Set(['camera-1', 'camera-2']),
+      };
+
+      vi.mocked(getReviews).mockImplementation(async (_hass, nativeQuery) => [
+        createFrigateReview({ id: `${nativeQuery.instance_id}-review` }),
+      ]);
+
+      await engine.getReviews(createHASS(), store, query);
+      const cached = await engine.getReviews(createHASS(), store, query);
+
+      // One call per instance on the first query, none on the second.
+      expect(getReviews).toHaveBeenCalledTimes(2);
+
+      assert(cached);
+      expect([...cached.values()]).toEqual([
+        expect.objectContaining({
+          instanceID: 'instance-1',
+          cached: true,
+          reviews: [createFrigateReview({ id: 'instance-1-review' })],
+        }),
+        expect.objectContaining({
+          instanceID: 'instance-2',
+          cached: true,
+          reviews: [createFrigateReview({ id: 'instance-2-review' })],
+        }),
+      ]);
     });
 
     it('should pass query parameters to review request', async () => {
