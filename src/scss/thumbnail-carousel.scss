@@ -37,6 +37,48 @@
   height: auto;
 }
 
+// The vertical list scrolls natively instead of using the carousel.
+.native-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  scrollbar-width: none;
+
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+
+  // Start the list just below the menu, which sits over the top of the drawer
+  // (46px tall, plus its fullscreen offset). Override with
+  // --advanced-camera-card-thumbnail-list-top-offset.
+  box-sizing: border-box;
+  padding-top: var(
+    --advanced-camera-card-thumbnail-list-top-offset,
+    calc(51px + var(--advanced-camera-card-menu-top-offset, 0px))
+  );
+  scroll-padding-top: var(
+    --advanced-camera-card-thumbnail-list-top-offset,
+    calc(51px + var(--advanced-camera-card-menu-top-offset, 0px))
+  );
+
+  // Skip rendering thumbnails that are scrolled out of view.
+  > .embla__slide {
+    content-visibility: auto;
+    contain-intrinsic-size: auto var(--advanced-camera-card-thumbnail-size);
+  }
+}
+.native-list::-webkit-scrollbar {
+  display: none;
+}
+
 .embla__slide {
   flex: 0 0 auto;
   opacity: var(--advanced-camera-card-carousel-thumbnail-opacity);

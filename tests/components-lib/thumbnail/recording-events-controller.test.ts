@@ -69,6 +69,20 @@ describe('RecordingEventsController', () => {
     expect(controller.getEvents(view)).toBe(events);
   });
 
+  it('should fetch as many events as the card asks for', async () => {
+    const { controller, builder, cameraManager } = createHarness();
+    await controller.update(createView(ViewMediaType.Recording), builder, cameraManager, 150);
+
+    expect(builder.buildReviewsQuery).toHaveBeenCalledWith(new Set([CAMERA]), { limit: 150 });
+  });
+
+  it('should fetch 50 events when the card gives no limit', async () => {
+    const { controller, builder, cameraManager } = createHarness();
+    await controller.update(createView(ViewMediaType.Recording), builder, cameraManager);
+
+    expect(builder.buildReviewsQuery).toHaveBeenCalledWith(new Set([CAMERA]), { limit: 50 });
+  });
+
   it('should not provide events for other media or other cameras', async () => {
     const { controller, builder, cameraManager } = createHarness();
     await controller.update(createView(ViewMediaType.Recording), builder, cameraManager);

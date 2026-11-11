@@ -7,7 +7,8 @@ import type { UnifiedQuery } from '../../view/unified-query';
 import type { UnifiedQueryBuilder } from '../../view/unified-query-builder';
 import type { View } from '../../view/view';
 
-const EVENTS_LIMIT = 50;
+// Used when the card's media_chunk_size is not given.
+const EVENTS_LIMIT_DEFAULT = 50;
 const EVENTS_MAX_AGE_SECONDS = 60;
 
 /**
@@ -43,6 +44,7 @@ export class RecordingEventsController {
     view?: View | null,
     builder?: UnifiedQueryBuilder | null,
     cameraManager?: CameraManager,
+    limit?: number,
   ): Promise<void> {
     const cameraID = view?.camera;
     if (
@@ -59,7 +61,7 @@ export class RecordingEventsController {
     }
 
     const query = builder.buildReviewsQuery(new Set([cameraID]), {
-      limit: EVENTS_LIMIT,
+      limit: limit ?? EVENTS_LIMIT_DEFAULT,
     });
     if (!query) {
       return;

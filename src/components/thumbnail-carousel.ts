@@ -79,6 +79,7 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
 
   private _thumbnails: TemplateResult[] = [];
   private _builder: UnifiedQueryBuilder | null = null;
+  private _scrolledToSlide: number | null = null;
   private _recordingEvents = new RecordingEventsController(() => {
     this._thumbnails = this._renderThumbnails();
     this.requestUpdate();
@@ -137,6 +138,7 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
         this.viewManagerEpoch?.manager.getView(),
         this._builder,
         this.cameraManager,
+        this.cardWideConfig?.performance?.features.media_chunk_size,
       );
       this.style.setProperty(
         '--advanced-camera-card-carousel-thumbnail-opacity',
@@ -300,9 +302,31 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
     });
   }
 
+  protected updated(changedProps: PropertyValues): void {
+    super.updated(changedProps);
+
+    // The native list scrolls the selected thumbnail into view itself (the
+    // carousel does this for horizontal thumbnails).
+    const selected = this._getSelectedSlide();
+    if (this._getDirection() === 'vertical' && selected !== this._scrolledToSlide) {
+      this._scrolledToSlide = selected;
+      this.renderRoot
+        .querySelector('.slide-selected')
+        ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }
+
   protected render(): TemplateResult | void {
     if (!this._thumbnails.length || !this.config?.mode || this.config.mode === 'none') {
       return;
+    }
+
+    // A vertical (left or right drawer) list scrolls natively: smoother on
+    // touch screens than dragging a carousel, especially with many thumbnails.
+    if (this._getDirection() === 'vertical') {
+      return html`<div class="native-list ${classMap({ fade: this.fadeThumbnails })}">
+        ${this._thumbnails}
+      </div>`;
     }
 
     return html`<advanced-camera-card-carousel
