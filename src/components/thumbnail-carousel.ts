@@ -310,9 +310,29 @@ export class AdvancedCameraCardThumbnailCarousel extends LitElement {
     const selected = this._getSelectedSlide();
     if (this._getDirection() === 'vertical' && selected !== this._scrolledToSlide) {
       this._scrolledToSlide = selected;
-      this.renderRoot
-        .querySelector('.slide-selected')
-        ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      this._scrollListToSelected();
+    }
+  }
+
+  // Scroll only the list. Not scrollIntoView(), which also scrolls every
+  // ancestor, including the one that hides a closed drawer, so selecting a clip
+  // elsewhere would pull the drawer open.
+  private _scrollListToSelected(): void {
+    const list = this.renderRoot.querySelector<HTMLElement>('.native-list');
+    const slide = list?.querySelector<HTMLElement>('.slide-selected');
+    if (!list || !slide) {
+      return;
+    }
+    const listBox = list.getBoundingClientRect();
+    const slideBox = slide.getBoundingClientRect();
+    const delta =
+      slideBox.top < listBox.top
+        ? slideBox.top - listBox.top
+        : slideBox.bottom > listBox.bottom
+          ? slideBox.bottom - listBox.bottom
+          : 0;
+    if (delta) {
+      list.scrollBy({ top: delta, behavior: 'smooth' });
     }
   }
 
