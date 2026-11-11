@@ -1004,6 +1004,18 @@ export class TimelineController {
         };
       }
     } else if (startTime && endTime) {
+      // A short clip (e.g. a one-second review) would otherwise zoom the
+      // timeline to a second or so, labelled in milliseconds. Center it in the
+      // configured window instead, as for events.
+      const windowSeconds = this._getConfiguredWindowSeconds();
+      const durationSeconds = (endTime.getTime() - startTime.getTime()) / 1000;
+      if (durationSeconds < windowSeconds) {
+        const gap = windowSeconds - durationSeconds;
+        return {
+          start: sub(startTime, { seconds: gap / 2 }),
+          end: add(endTime, { seconds: gap / 2 }),
+        };
+      }
       return {
         start: startTime,
         end: endTime,

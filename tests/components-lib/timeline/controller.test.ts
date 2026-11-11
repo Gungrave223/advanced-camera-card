@@ -422,6 +422,37 @@ describe('TimelineController', () => {
     expect(timeline.setWindow).toHaveBeenCalledTimes(1);
   });
 
+  it('should center a short review in the configured window', async () => {
+    // A one-second review outside the current window.
+    const media = new TestViewMedia({
+      cameraID: CAMERA_ID,
+      mediaType: ViewMediaType.Review,
+      startTime: new Date('2026-09-02T10:00:00Z'),
+      endTime: new Date('2026-09-02T10:00:01Z'),
+    });
+    const { timeline } = await createHarness({ media: [media] });
+
+    expect(timeline.setWindow).toHaveBeenCalledWith(
+      new Date('2026-09-02T09:30:00.500Z'),
+      new Date('2026-09-02T10:30:00.500Z'),
+    );
+  });
+
+  it('should fit a recording longer than the configured window', async () => {
+    const media = new TestViewMedia({
+      cameraID: CAMERA_ID,
+      mediaType: ViewMediaType.Recording,
+      startTime: new Date('2026-09-02T10:00:00Z'),
+      endTime: new Date('2026-09-02T12:00:00Z'),
+    });
+    const { timeline } = await createHarness({ media: [media] });
+
+    expect(timeline.setWindow).toHaveBeenCalledWith(
+      new Date('2026-09-02T10:00:00Z'),
+      new Date('2026-09-02T12:00:00Z'),
+    );
+  });
+
   describe('should show the position of the footage', () => {
     const start = WINDOW.start.getTime();
     const length = WINDOW.end.getTime() - start;
