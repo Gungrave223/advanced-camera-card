@@ -105,17 +105,22 @@ export class CardElementManager {
       'mousemove',
       this._api.getInteractionManager().reportInteraction,
     );
+    // Passive, so the browser never waits on this before scrolling (a
+    // non-passive touchmove on the card makes touch scrolling stutter).
     this._element.addEventListener(
       'wheel',
       this._api.getInteractionManager().reportInteraction,
+      { passive: true },
     );
     this._element.addEventListener(
       'touchstart',
       this._api.getInteractionManager().reportInteraction,
+      { passive: true },
     );
     this._element.addEventListener(
       'touchmove',
       this._api.getInteractionManager().reportInteraction,
+      { passive: true },
     );
     this._element.addEventListener(
       'll-custom',

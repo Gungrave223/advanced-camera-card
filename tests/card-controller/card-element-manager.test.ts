@@ -144,10 +144,12 @@ describe('CardElementManager', () => {
     expect(addEventListener).toHaveBeenCalledWith(
       'touchstart',
       api.getInteractionManager().reportInteraction,
+      { passive: true },
     );
     expect(addEventListener).toHaveBeenCalledWith(
       'touchmove',
       api.getInteractionManager().reportInteraction,
+      { passive: true },
     );
     expect(windowAddEventListener).toHaveBeenCalledWith(
       'location-changed',

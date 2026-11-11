@@ -43,7 +43,6 @@
   flex-direction: column;
   gap: 5px;
   width: 100%;
-  height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
@@ -56,24 +55,17 @@
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
 
-  // Start the list just below the menu, which sits over the top of the drawer
-  // (46px tall, plus its fullscreen offset). Override with
-  // --advanced-camera-card-thumbnail-list-top-offset.
+  // Start the list just below the menu bar, which sits over the top of the
+  // drawer (46px tall, plus its fullscreen offset). The thumbnails scroll up
+  // behind it. Override with --advanced-camera-card-thumbnail-list-top-offset.
+  --advanced-camera-card-thumbnail-list-top: var(
+    --advanced-camera-card-thumbnail-list-top-offset,
+    calc(51px + var(--advanced-camera-card-menu-top-offset, 0px))
+  );
   box-sizing: border-box;
-  padding-top: var(
-    --advanced-camera-card-thumbnail-list-top-offset,
-    calc(51px + var(--advanced-camera-card-menu-top-offset, 0px))
-  );
-  scroll-padding-top: var(
-    --advanced-camera-card-thumbnail-list-top-offset,
-    calc(51px + var(--advanced-camera-card-menu-top-offset, 0px))
-  );
-
-  // Skip rendering thumbnails that are scrolled out of view.
-  > .embla__slide {
-    content-visibility: auto;
-    contain-intrinsic-size: auto var(--advanced-camera-card-thumbnail-size);
-  }
+  height: 100%;
+  padding-top: var(--advanced-camera-card-thumbnail-list-top);
+  scroll-padding-top: var(--advanced-camera-card-thumbnail-list-top);
 }
 .native-list::-webkit-scrollbar {
   display: none;
