@@ -326,6 +326,11 @@
             "seek": "Pan seeks across all media",
             "seek-in-camera": "Pan seeks within selected camera only",
             "seek-in-media": "Pan seeks within selected media item only"
+          },
+          "scrubber": {
+            "editor_label": "Vertical scrubber",
+            "height": "Height in pixels",
+            "thumbnails": "Show thumbnails beside events"
           }
         },
         "wheel": "Scroll wheel scrolls media carousel"
@@ -416,6 +421,7 @@
         "style": "Timeline style",
         "styles": {
           "ribbon": "Events on a single ribbon",
+          "scrubber": "Vertical scrubber (Google Home style)",
           "stack": "Stacked & clustered events"
         },
         "window_seconds": "Default timeline window length in seconds"

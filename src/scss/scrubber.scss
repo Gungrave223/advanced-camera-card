@@ -1,0 +1,134 @@
+:host {
+  display: block;
+  width: 100%;
+
+  --advanced-camera-card-scrubber-background: var(
+    --advanced-camera-card-scrubber-background-override,
+    #202124
+  );
+  --advanced-camera-card-scrubber-text: #e8eaed;
+  --advanced-camera-card-scrubber-text-secondary: #9aa0a6;
+  --advanced-camera-card-scrubber-recording: #5f6368;
+  --advanced-camera-card-scrubber-future: rgba(255, 255, 255, 0.04);
+}
+
+.strip {
+  position: relative;
+  overflow: hidden;
+  background: var(--advanced-camera-card-scrubber-background);
+  color: var(--advanced-camera-card-scrubber-text);
+
+  // The strip handles all touch gestures itself (drag, fling, pinch).
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+
+.strip:active {
+  cursor: grabbing;
+}
+
+canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.thumbnails {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.thumbnail {
+  position: absolute;
+  top: 0;
+  left: 84px;
+  right: 8px;
+  height: 56px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  will-change: transform;
+}
+
+.thumbnail advanced-camera-card-thumbnail-feature-thumbnail {
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 2px var(--advanced-camera-card-scrubber-event-color);
+  background: rgba(255, 255, 255, 0.06);
+  --advanced-camera-card-border-radius-final: 8px;
+}
+
+.thumbnail.selected advanced-camera-card-thumbnail-feature-thumbnail {
+  outline: 2px solid var(--advanced-camera-card-scrubber-text);
+  outline-offset: 1px;
+}
+
+.details {
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.details .label {
+  color: var(--advanced-camera-card-scrubber-text);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.details .time {
+  color: var(--advanced-camera-card-scrubber-text-secondary);
+}
+
+.playhead {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  margin-top: -1px;
+  background: var(--advanced-camera-card-scrubber-text);
+  pointer-events: none;
+}
+
+.bubble {
+  position: absolute;
+  right: 8px;
+  transform: translateY(-50%);
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: var(--advanced-camera-card-scrubber-text);
+  color: var(--advanced-camera-card-scrubber-background);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.bubble.live {
+  background: #d93025;
+  color: #fff;
+}
+
+.go-live {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 12px;
+  border: none;
+  border-radius: 14px;
+  background: #d93025;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}

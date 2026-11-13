@@ -49,10 +49,38 @@ export const miniTimelineConfigDefault = {
   style: 'ribbon' as const,
 };
 
+// Options for the `scrubber` style (a separate, vertical timeline). Kept out of
+// the mini timeline defaults so cards not using it are unchanged.
+export const scrubberConfigDefault = {
+  height: 280,
+  thumbnails: true,
+};
+
+const scrubberConfigSchema = z.object({
+  height: z
+    .number()
+    .min(100)
+    .max(2000)
+    .optional()
+    .default(scrubberConfigDefault.height),
+  thumbnails: z
+    .boolean()
+    .optional()
+    .default(scrubberConfigDefault.thumbnails),
+});
+export type ScrubberConfig = z.infer<typeof scrubberConfigSchema>;
+
 export const miniTimelineConfigSchema = timelineCoreConfigSchema.extend({
   mode: z.enum(['none', 'above', 'below']).default(miniTimelineConfigDefault.mode),
   pan_mode: timelinePanModeSchema.optional().default(miniTimelineConfigDefault.pan_mode),
-  style: timelineCoreConfigSchema.shape.style.default(miniTimelineConfigDefault.style),
+  // `scrubber` swaps in a separate vertical timeline component; the other
+  // styles keep the original timeline.
+  style: z
+    .enum(['stack', 'ribbon', 'scrubber'])
+    .optional()
+    .default(miniTimelineConfigDefault.style),
+  // Optional with no default, so cards not using the scrubber are unchanged.
+  scrubber: scrubberConfigSchema.optional(),
 });
 export type MiniTimelineControlConfig = z.infer<typeof miniTimelineConfigSchema>;
 

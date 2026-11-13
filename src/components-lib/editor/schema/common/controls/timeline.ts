@@ -11,6 +11,7 @@ import { createNumberSelector, createSelectSelector } from '../selectors';
  */
 export const getTimelineCoreSchema = (options?: {
   includePanMode?: boolean;
+  includeScrubber?: boolean;
 }): HAFormSchema[] => {
   const schema: HAFormSchema[] = [
     {
@@ -19,6 +20,16 @@ export const getTimelineCoreSchema = (options?: {
       selector: createSelectSelector([
         { value: 'ribbon', label: localize('config.common.timeline.styles.ribbon') },
         { value: 'stack', label: localize('config.common.timeline.styles.stack') },
+        // The scrubber is a separate component only available as a mini
+        // timeline.
+        ...(options?.includeScrubber
+          ? [
+              {
+                value: 'scrubber',
+                label: localize('config.common.timeline.styles.scrubber'),
+              },
+            ]
+          : []),
       ]),
     },
   ];
@@ -106,6 +117,24 @@ export const getMiniTimelineSchema = (): HAFormExpandableSchema => ({
         },
       ]),
     },
-    ...getTimelineCoreSchema({ includePanMode: true }),
+    ...getTimelineCoreSchema({ includePanMode: true, includeScrubber: true }),
+    {
+      name: 'scrubber',
+      type: 'expandable',
+      title: localize('config.common.controls.timeline.scrubber.editor_label'),
+      icon: 'mdi:gesture-swipe-vertical',
+      schema: [
+        {
+          name: 'height',
+          label: localize('config.common.controls.timeline.scrubber.height'),
+          selector: createNumberSelector(),
+        },
+        {
+          name: 'thumbnails',
+          label: localize('config.common.controls.timeline.scrubber.thumbnails'),
+          selector: { boolean: {} },
+        },
+      ],
+    },
   ],
 });

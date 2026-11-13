@@ -68,10 +68,21 @@ export class AdvancedCameraCardSurround extends LitElement {
     );
   }
 
+  /**
+   * Whether the separate vertical scrubber replaces the original timeline.
+   */
+  private _useScrubber(): boolean {
+    return this.timelineConfig?.style === 'scrubber';
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected willUpdate(_changedProperties: PropertyValues): void {
     if (this.timelineConfig?.mode && this.timelineConfig.mode !== 'none') {
-      void import('./timeline-core.js');
+      if (this._useScrubber()) {
+        void import('./scrubber.js');
+      } else {
+        void import('./timeline-core.js');
+      }
     }
   }
 
@@ -97,10 +108,11 @@ export class AdvancedCameraCardSurround extends LitElement {
     return html` <advanced-camera-card-surround-basic
       .locked=${this.locked}
       .drawerPinned=${this.drawerPinned}
-      @advanced-camera-card:media:footage-time=${(ev: CustomEvent<Date | null>) =>
-        (ev.currentTarget as HTMLElement)
-          .querySelector('advanced-camera-card-timeline-core')
-          ?.setPlayhead(ev.detail)}
+      @advanced-camera-card:media:footage-time=${(ev: CustomEvent<Date | null>) => {
+        const host = ev.currentTarget as HTMLElement;
+        host.querySelector('advanced-camera-card-timeline-core')?.setPlayhead(ev.detail);
+        host.querySelector('advanced-camera-card-scrubber')?.setPlayhead(ev.detail);
+      }}
       @advanced-camera-card:thumbnails-carousel:media-select=${(ev: CustomEvent) =>
         changeDrawer(ev, 'close')}
     >
@@ -120,7 +132,18 @@ export class AdvancedCameraCardSurround extends LitElement {
           >
           </advanced-camera-card-thumbnail-carousel>`
         : ''}
-      ${this.timelineConfig && this.timelineConfig.mode !== 'none'
+      ${this.timelineConfig && this.timelineConfig.mode !== 'none' && this._useScrubber()
+        ? html` <advanced-camera-card-scrubber
+            slot=${this.timelineConfig.mode}
+            .hass=${this.hass}
+            .viewManagerEpoch=${this.viewManagerEpoch}
+            .timelineConfig=${this.timelineConfig}
+            .cameraManager=${this.cameraManager}
+            .foldersManager=${this.foldersManager}
+            .conditionStateManager=${this.conditionStateManager}
+          >
+          </advanced-camera-card-scrubber>`
+        : this.timelineConfig && this.timelineConfig.mode !== 'none'
         ? html` <advanced-camera-card-timeline-core
             slot=${this.timelineConfig.mode}
             .hass=${this.hass}
