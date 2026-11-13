@@ -44,6 +44,9 @@ export interface ScrubberLayoutItem {
   top: number;
   bottom: number;
 
+  // Middle of the pill, where its thumbnail is centered and connected.
+  anchor: number;
+
   // Top of the thumbnail beside the pill, or null when there is no room.
   thumbnailTop: number | null;
 }
@@ -139,40 +142,88 @@ export const zoom = (geometry: ScrubberGeometry, factor: number): ScrubberGeomet
   secondsPerPixel: clampSecondsPerPixel(geometry.secondsPerPixel * factor),
 });
 
+// Positions in "absolute" pixels: y = -time / secondsPerPixel. They depend
+// only on the zoom, not on where the strip is scrolled to, so a layout
+// computed in them stays put while scrubbing.
+const toAbsoluteY = (time: number, secondsPerPixel: number): number =>
+  -time / 1000 / secondsPerPixel;
+
+const getAbsoluteOffset = (geometry: ScrubberGeometry): number =>
+  geometry.playheadY + geometry.time / 1000 / geometry.secondsPerPixel;
+
 /**
- * Lay out event pills and their thumbnails. Thumbnails sit beside the pill's
- * top (the newest moment of the event); when they would overlap the one above,
- * they are pushed down, and dropped if that moves them too far from the pill.
+ * Lay out event pills and their thumbnails, independent of scrolling (only
+ * the zoom matters). As in Google Home, each thumbnail is centered level with
+ * its pill; when events are bunched up, a thumbnail that would overlap the one
+ * above is left out (that event shows as a pill only) rather than pushed out
+ * of line.
  */
+export const layoutEventsAbsolute = (
+  events: ScrubberLayoutInput[],
+  secondsPerPixel: number,
+  thumbnailHeight: number,
+  gap = 8,
+): ScrubberLayoutItem[] => {
+  const items = events
+    .map((event): ScrubberLayoutItem => {
+      const top = toAbsoluteY(event.end, secondsPerPixel);
+      const bottom = Math.max(
+        toAbsoluteY(event.start, secondsPerPixel),
+        top + SCRUBBER_MIN_PILL_HEIGHT,
+      );
+      return { id: event.id, top, bottom, anchor: (top + bottom) / 2, thumbnailTop: null };
+    })
+    .sort((a, b) => a.anchor - b.anchor || a.id.localeCompare(b.id));
+
+  let lastThumbnailBottom = -Infinity;
+  for (const item of items) {
+    const thumbnailTop = item.anchor - thumbnailHeight / 2;
+    if (thumbnailTop >= lastThumbnailBottom + gap) {
+      item.thumbnailTop = thumbnailTop;
+      lastThumbnailBottom = thumbnailTop + thumbnailHeight;
+    }
+  }
+  return items;
+};
+
+/**
+ * Move an absolute layout to the strip's current position, keeping only the
+ * items (or thumbnails) that are on screen.
+ */
+export const layoutToScreen = (
+  geometry: ScrubberGeometry,
+  layout: ScrubberLayoutItem[],
+  thumbnailHeight: number,
+): ScrubberLayoutItem[] => {
+  const offset = getAbsoluteOffset(geometry);
+  const items: ScrubberLayoutItem[] = [];
+  for (const item of layout) {
+    const top = item.top + offset;
+    const bottom = item.bottom + offset;
+    const thumbnailTop = item.thumbnailTop === null ? null : item.thumbnailTop + offset;
+    const pillVisible = bottom >= 0 && top <= geometry.height;
+    const thumbnailVisible =
+      thumbnailTop !== null &&
+      thumbnailTop + thumbnailHeight >= 0 &&
+      thumbnailTop <= geometry.height;
+    if (pillVisible || thumbnailVisible) {
+      items.push({ id: item.id, top, bottom, anchor: item.anchor + offset, thumbnailTop });
+    }
+  }
+  return items;
+};
+
 export const layoutEvents = (
   geometry: ScrubberGeometry,
   events: ScrubberLayoutInput[],
   thumbnailHeight: number,
-  gap = 4,
-): ScrubberLayoutItem[] => {
-  const sorted = [...events].sort((a, b) => b.end - a.end);
-  const items: ScrubberLayoutItem[] = [];
-  let lastThumbnailBottom = -Infinity;
-
-  for (const event of sorted) {
-    const top = timeToY(geometry, event.end);
-    const bottom = Math.max(timeToY(geometry, event.start), top + SCRUBBER_MIN_PILL_HEIGHT);
-
-    if (bottom < 0 || top > geometry.height) {
-      continue;
-    }
-
-    let thumbnailTop: number | null = Math.max(top, lastThumbnailBottom + gap);
-    if (thumbnailTop - bottom > thumbnailHeight / 2) {
-      thumbnailTop = null;
-    } else {
-      lastThumbnailBottom = thumbnailTop + thumbnailHeight;
-    }
-
-    items.push({ id: event.id, top, bottom, thumbnailTop });
-  }
-  return items;
-};
+  gap = 8,
+): ScrubberLayoutItem[] =>
+  layoutToScreen(
+    geometry,
+    layoutEventsAbsolute(events, geometry.secondsPerPixel, thumbnailHeight, gap),
+    thumbnailHeight,
+  );
 
 /**
  * Advance a fling. Velocity is in pixels per millisecond and decays

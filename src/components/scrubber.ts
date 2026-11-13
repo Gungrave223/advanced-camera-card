@@ -23,7 +23,8 @@ import {
 import {
   getTicks,
   getVisibleRange,
-  layoutEvents,
+  layoutEventsAbsolute,
+  layoutToScreen,
   stepMomentum,
   timeAfterDrag,
   timeToY,
@@ -139,6 +140,8 @@ export class AdvancedCameraCardScrubber extends LitElement {
 
   private _events: ScrubberEvent[] = [];
   private _layout: ScrubberLayoutItem[] = [];
+  private _absoluteLayout: ScrubberLayoutItem[] = [];
+  private _absoluteLayoutKey: string | null = null;
 
   private _resizeObserver = new ResizeObserver(() => this._measure());
   private _wheelHandler = (ev: WheelEvent) => this._handleWheel(ev);
@@ -581,8 +584,25 @@ export class AdvancedCameraCardScrubber extends LitElement {
     const range = getVisibleRange(geometry);
     void this._controller.ensureData(range);
 
-    this._events = this._controller.getEvents(range);
-    this._layout = layoutEvents(geometry, this._events, THUMBNAIL_SIZE);
+    // Lay out every loaded event (not just the visible ones) so the layout
+    // does not change as the strip scrolls; it is only redone when the zoom
+    // or the events change.
+    this._events = this._controller.getEvents({
+      start: Number.NEGATIVE_INFINITY,
+      end: Number.POSITIVE_INFINITY,
+    });
+    const layoutKey = `${geometry.secondsPerPixel}|${this._events
+      .map((event) => `${event.id}:${event.start}:${event.end}`)
+      .join(',')}`;
+    if (layoutKey !== this._absoluteLayoutKey) {
+      this._absoluteLayoutKey = layoutKey;
+      this._absoluteLayout = layoutEventsAbsolute(
+        this._events,
+        geometry.secondsPerPixel,
+        THUMBNAIL_SIZE,
+      );
+    }
+    this._layout = layoutToScreen(geometry, this._absoluteLayout, THUMBNAIL_SIZE);
     const showThumbnails = this.timelineConfig?.scrubber?.thumbnails !== false;
     const eventsByID = new Map(this._events.map((event) => [event.id, event]));
     const thumbnails = showThumbnails
@@ -739,12 +759,13 @@ export class AdvancedCameraCardScrubber extends LitElement {
         context.stroke();
       }
       if (item.thumbnailTop !== null && this.timelineConfig?.scrubber?.thumbnails !== false) {
-        context.fillStyle = event.color;
-        context.globalAlpha = 0.6;
+        // A level line from the middle of the pill to its thumbnail.
+        context.fillStyle = secondary;
+        context.globalAlpha = 0.5;
         context.fillRect(
-          pillX + PILL_WIDTH,
-          Math.min(item.top, item.thumbnailTop) + 4,
-          THUMBNAIL_X - pillX - PILL_WIDTH,
+          pillX + PILL_WIDTH + 2,
+          Math.round(item.anchor),
+          THUMBNAIL_X - pillX - PILL_WIDTH - 2,
           1,
         );
         context.globalAlpha = 1;

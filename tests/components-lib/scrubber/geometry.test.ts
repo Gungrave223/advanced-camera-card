@@ -6,6 +6,8 @@ import {
   getTicks,
   getVisibleRange,
   layoutEvents,
+  layoutEventsAbsolute,
+  layoutToScreen,
   SCRUBBER_MAX_SECONDS_PER_PIXEL,
   SCRUBBER_MIN_PILL_HEIGHT,
   SCRUBBER_MIN_SECONDS_PER_PIXEL,
@@ -103,13 +105,16 @@ describe('scrubber geometry', () => {
   });
 
   describe('should lay out events', () => {
-    it('should place a pill from end (top) to start (bottom)', () => {
+    it('should center a thumbnail level with its pill', () => {
       const [item] = layoutEvents(
         createGeometry(),
         [{ id: 'a', start: NOW - 600 * 1000, end: NOW - 300 * 1000 }],
         56,
       );
-      expect(item).toEqual({ id: 'a', top: 100, bottom: 130, thumbnailTop: 100 });
+      expect(item.top).toBeCloseTo(100);
+      expect(item.bottom).toBeCloseTo(130);
+      expect(item.anchor).toBeCloseTo(115);
+      expect(item.thumbnailTop).toBeCloseTo(87);
     });
 
     it('should give short events a minimum height', () => {
@@ -118,25 +123,50 @@ describe('scrubber geometry', () => {
         [{ id: 'a', start: NOW - 1000, end: NOW }],
         56,
       );
-      expect(item.bottom - item.top).toBe(SCRUBBER_MIN_PILL_HEIGHT);
+      expect(item.bottom - item.top).toBeCloseTo(SCRUBBER_MIN_PILL_HEIGHT);
     });
 
-    it('should push overlapping thumbnails down and drop ones too far away', () => {
+    it('should leave out a thumbnail that would overlap, not push it', () => {
       const items = layoutEvents(
         createGeometry(),
         [
           { id: 'newest', start: NOW - 20 * 1000, end: NOW },
           { id: 'close', start: NOW - 400 * 1000, end: NOW - 200 * 1000 },
-          { id: 'crowded', start: NOW - 500 * 1000, end: NOW - 450 * 1000 },
+          { id: 'far', start: NOW - 1200 * 1000, end: NOW - 1000 * 1000 },
         ],
         56,
       );
-      expect(items.map((item) => item.id)).toEqual(['newest', 'close', 'crowded']);
-      expect(items[0].thumbnailTop).toBe(70);
-      // Pushed below the first thumbnail (70 + 56 + 4 gap).
-      expect(items[1].thumbnailTop).toBe(130);
-      // Would need to sit at 190, far below its pill (115-125).
-      expect(items[2].thumbnailTop).toBeNull();
+      expect(items.map((item) => item.id)).toEqual(['newest', 'close', 'far']);
+      // Centered on its pill (70-80).
+      expect(items[0].thumbnailTop).toBeCloseTo(47);
+      // Would start at 72, inside the first thumbnail (47-103).
+      expect(items[1].thumbnailTop).toBeNull();
+      // Clear of the first, so centered on its pill (170-190).
+      expect(items[2].thumbnailTop).toBeCloseTo(152);
+    });
+
+    it('should not change the layout when the strip scrolls', () => {
+      const events = Array.from({ length: 30 }, (_, index) => ({
+        id: `event-${index}`,
+        start: NOW - (index * 37 + 30) * 1000,
+        end: NOW - index * 37 * 1000,
+      }));
+      const layout = layoutEventsAbsolute(events, 10, 56);
+
+      const shown = (time: number) =>
+        layoutToScreen(createGeometry({ time, height: 2000 }), layout, 56)
+          .filter((item) => item.thumbnailTop !== null)
+          .map((item) => item.id);
+
+      // Scrolled by 3 and then 7.5 minutes: the same thumbnails remain, each
+      // moved by the scroll distance.
+      expect(shown(NOW - 180 * 1000)).toEqual(shown(NOW));
+      expect(shown(NOW - 450 * 1000)).toEqual(shown(NOW));
+
+      const before = layoutToScreen(createGeometry(), layout, 56);
+      const after = layoutToScreen(createGeometry({ time: NOW - 100 * 1000 }), layout, 56);
+      const first = after.find((item) => item.id === before[0].id);
+      expect(first?.top).toBeCloseTo(before[0].top - 10);
     });
 
     it('should skip events outside the strip', () => {
