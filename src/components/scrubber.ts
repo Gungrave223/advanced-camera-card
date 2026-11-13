@@ -44,6 +44,7 @@ import type { MediaLoadedInfoEventDetail } from '../types';
 import {
   findMediaAspect,
   releaseMediaCarouselHeights,
+  setNextPreviousHidden,
 } from '../components-lib/scrubber/media-layout';
 import scrubberStyle from '../scss/scrubber.scss?inline';
 import { stopEventFromActivatingCardWideActions } from '../utils/action';
@@ -178,6 +179,7 @@ export class AdvancedCameraCardScrubber extends LitElement {
   private _relayoutTimer: number | null = null;
   private _aspectTimer: number | null = null;
   private _mediaLoadedHandler = (ev: CustomEvent<MediaLoadedInfoEventDetail>) => {
+    this._applyNextPreviousVisibility();
     const info = ev.detail?.info;
     if (info && info.width > 0 && info.height > 0) {
       this._mediaAspect = info.height / info.width;
@@ -207,6 +209,7 @@ export class AdvancedCameraCardScrubber extends LitElement {
       );
     }
     this._liveTimer = window.setInterval(() => {
+      this._applyNextPreviousVisibility();
       if (this._followLive && !this._interacting) {
         this._requestFrame();
       }
@@ -214,6 +217,7 @@ export class AdvancedCameraCardScrubber extends LitElement {
   }
 
   disconnectedCallback(): void {
+    setNextPreviousHidden(this._getMediaRoots(), false);
     this._resizeObserver.disconnect();
     this._containerObserver.disconnect();
     this._container?.removeEventListener(
@@ -281,6 +285,8 @@ export class AdvancedCameraCardScrubber extends LitElement {
     if (changedProps.has('viewManagerEpoch')) {
       this._controller.setView(this.viewManagerEpoch ?? null);
       this._syncWithView();
+      // The arrows are re-rendered with the new view; catch them once drawn.
+      window.requestAnimationFrame(() => this._applyNextPreviousVisibility());
     }
   }
 
@@ -823,9 +829,19 @@ export class AdvancedCameraCardScrubber extends LitElement {
     </div>`;
   }
 
+  /**
+   * The media's previous / next arrows show only in the clip list; in scrub
+   * mode the timeline itself moves through the footage. The arrows are
+   * re-created as media and views change, so this is re-applied regularly.
+   */
+  private _applyNextPreviousVisibility(): void {
+    setNextPreviousHidden(this._getMediaRoots(), this._mode === 'timeline');
+  }
+
   private _toggleMode(ev: Event): void {
     stopEventFromActivatingCardWideActions(ev);
     this._mode = this._mode === 'list' ? 'timeline' : 'list';
+    this._applyNextPreviousVisibility();
     if (this._mode === 'list') {
       // Start with the day being viewed, back to its midnight.
       const day = new Date(this._geometry.time);

@@ -233,13 +233,14 @@ describe('ScrubberController', () => {
     expect(manager.setViewByParameters).not.toHaveBeenCalled();
   });
 
-  it('should play a tapped event, newest first', () => {
+  it('should play a tapped event, oldest first like the card', () => {
     const { controller, manager, media } = createHarness();
 
     expect(controller.playEvent('older')).toBe(true);
     const call = manager.setViewByParameters.mock.calls[0][0];
     expect(call?.params?.view).toBe('media');
-    expect(call?.params?.queryResults?.getResults()).toEqual([media[0], media[1]]);
+    // Oldest first, so the viewer's next control moves forward in time.
+    expect(call?.params?.queryResults?.getResults()).toEqual([media[1], media[0]]);
     expect(call?.params?.queryResults?.getSelectedResult()).toBe(media[1]);
   });
 

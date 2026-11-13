@@ -4,6 +4,7 @@ import type { CameraManager } from '../../camera-manager/manager';
 import { QueryType } from '../../camera-manager/types';
 import type { FoldersManager } from '../../card-controller/folders/manager';
 import { MergeContextViewModifier } from '../../card-controller/view/modifiers/merge-context';
+import { sortItems } from '../../card-controller/view/sort';
 import type { ViewManagerEpoch } from '../../card-controller/view/types';
 import type { ConditionStateManagerReadonlyInterface } from '../../condition-trigger/conditions/types';
 import type { MiniTimelineControlConfig } from '../../config/schema/common/controls/timeline';
@@ -436,11 +437,13 @@ export class ScrubberController {
     }
 
     const query = item.query;
-    const media = this._source.dataset
+    const unsorted = this._source.dataset
       .get({ filter: (candidate) => candidate.query === query })
       .map((candidate) => candidate.media)
-      .filter(isTruthy)
-      .sort((a, b) => (b.getStartTime()?.getTime() ?? 0) - (a.getStartTime()?.getTime() ?? 0));
+      .filter(isTruthy);
+    // Same order as the card's own queries (oldest first), so the viewer's
+    // next control moves forward in time.
+    const media = sortItems(unsorted);
     const selectedIndex = media.findIndex((candidate) => candidate.getID() === id);
     if (selectedIndex < 0) {
       return false;

@@ -96,3 +96,28 @@ export const releaseMediaCarouselHeights = (roots: Element[]): number => {
   });
   return released;
 };
+
+const NEXT_PREVIOUS_TAG = 'ADVANCED-CAMERA-CARD-NEXT-PREVIOUS-CONTROL';
+
+// Marks the controls this scrubber hid, so only those are shown again.
+const HIDDEN_ATTRIBUTE = 'data-scrubber-hidden';
+
+/**
+ * Hide (or show again) the media's previous / next controls. The scrubber
+ * hides them while in scrub mode, where dragging the timeline moves through
+ * footage instead.
+ */
+export const setNextPreviousHidden = (roots: Element[], hidden: boolean): void => {
+  walkComposedTree(roots, (element) => {
+    if (element.tagName !== NEXT_PREVIOUS_TAG || !(element instanceof HTMLElement)) {
+      return;
+    }
+    if (hidden && !element.hasAttribute(HIDDEN_ATTRIBUTE)) {
+      element.setAttribute(HIDDEN_ATTRIBUTE, '');
+      element.style.display = 'none';
+    } else if (!hidden && element.hasAttribute(HIDDEN_ATTRIBUTE)) {
+      element.removeAttribute(HIDDEN_ATTRIBUTE);
+      element.style.display = '';
+    }
+  });
+};
