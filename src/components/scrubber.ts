@@ -43,6 +43,7 @@ import scrubberStyle from '../scss/scrubber.scss?inline';
 import { stopEventFromActivatingCardWideActions } from '../utils/action';
 import { contentsChanged } from '../utils/basic';
 
+import './icon.js';
 import './thumbnail/feature/thumbnail.js';
 
 // Horizontal layout of the strip (pixels from the left).
@@ -67,6 +68,12 @@ const TAP_MAX_DURATION_MS = 400;
 const FOLLOW_PAUSE_AFTER_INTERACTION_MS = 2500;
 
 const WHEEL_SETTLE_MS = 350;
+
+// Height of the header row (date and the timeline / list toggle).
+const HEADER_HEIGHT = 44;
+
+// Load the previous day when the list is scrolled this close to its end.
+const LIST_LOAD_MORE_PX = 200;
 const MOMENTUM_MIN_VELOCITY = 0.02;
 
 interface DragState {
@@ -109,6 +116,13 @@ export class AdvancedCameraCardScrubber extends LitElement {
 
   @state()
   private _message: string | null = null;
+
+  // Google Home style toggle between the timeline and a list of events.
+  @state()
+  private _mode: 'timeline' | 'list' = 'timeline';
+
+  // The oldest time the list has asked to load (it grows as you scroll).
+  private _listStart: number | null = null;
 
   private _controller = new ScrubberController(() => this._requestFrame());
   private _refStrip: Ref<HTMLElement> = createRef();
@@ -612,8 +626,15 @@ export class AdvancedCameraCardScrubber extends LitElement {
     const live = this._followLive && this._controller.isLive() && !this._interacting;
 
     return html`<div
-      class="strip"
-      style=${styleMap({ height: this.collapsed ? '0px' : `${geometry.height}px` })}
+      class="panel"
+      style=${styleMap({
+        height: this.collapsed ? '0px' : `${geometry.height + HEADER_HEIGHT}px`,
+      })}
+    >
+      ${this._renderHeader(live)}
+      <div
+      class=${classMap({ strip: true, hidden: this._mode !== 'timeline' })}
+      style=${styleMap({ height: `${geometry.height}px` })}
       ${ref(this._refStrip)}
       @pointerdown=${(ev: PointerEvent) => this._handlePointerDown(ev)}
       @pointermove=${(ev: PointerEvent) => this._handlePointerMove(ev)}
@@ -656,16 +677,137 @@ export class AdvancedCameraCardScrubber extends LitElement {
       >
         ${this._message ?? this._getBubbleText()}
       </div>
+    </div>
+      ${this._mode === 'list' ? this._renderList(geometry.height) : ''}
+    </div>`;
+  }
+
+  private _renderHeader(live: boolean): TemplateResult {
+    const list = this._mode === 'list';
+    return html`<div
+      class="header"
+      @pointerdown=${(ev: Event) => stopEventFromActivatingCardWideActions(ev)}
+      @click=${(ev: Event) => stopEventFromActivatingCardWideActions(ev)}
+    >
+      <advanced-camera-card-icon
+        class="calendar"
+        .icon=${{ icon: 'mdi:calendar-blank-outline' }}
+      ></advanced-camera-card-icon>
+      <span class="date">${this._formatDate(this._geometry.time)}</span>
       ${live
         ? ''
-        : html`<button
-            class="go-live"
-            @pointerdown=${(ev: Event) => stopEventFromActivatingCardWideActions(ev)}
-            @click=${(ev: Event) => this._handleLiveClick(ev)}
-          >
+        : html`<button class="go-live" @click=${(ev: Event) => this._handleLiveClick(ev)}>
             Live
           </button>`}
+      <button
+        class="toggle"
+        title=${list ? 'Timeline view' : 'Event history view'}
+        aria-label=${list ? 'Timeline view' : 'Event history view'}
+        @click=${(ev: Event) => this._toggleMode(ev)}
+      >
+        <advanced-camera-card-icon
+          .icon=${{ icon: list ? 'mdi:timeline-clock-outline' : 'mdi:view-list-outline' }}
+        ></advanced-camera-card-icon>
+      </button>
     </div>`;
+  }
+
+  private _toggleMode(ev: Event): void {
+    stopEventFromActivatingCardWideActions(ev);
+    this._mode = this._mode === 'list' ? 'timeline' : 'list';
+    if (this._mode === 'list') {
+      // Start with the day being viewed, back to its midnight.
+      const day = new Date(this._geometry.time);
+      this._listStart = new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
+      void this._controller.ensureData({ start: this._listStart, end: this._now() });
+    }
+    this._requestFrame();
+  }
+
+  private _handleListScroll(ev: Event): void {
+    const list = ev.currentTarget as HTMLElement;
+    if (
+      this._listStart !== null &&
+      list.scrollTop + list.clientHeight >= list.scrollHeight - LIST_LOAD_MORE_PX
+    ) {
+      // Near the bottom: load the day before.
+      this._listStart -= 24 * 60 * 60 * 1000;
+      void this._controller.ensureData({ start: this._listStart, end: this._now() });
+    }
+  }
+
+  private _formatDuration(event: ScrubberEvent): string {
+    const seconds = Math.max(1, Math.round((event.end - event.start) / 1000));
+    if (seconds < 60) {
+      return `${seconds} sec`;
+    }
+    const minutes = Math.round(seconds / 60);
+    if (minutes < 60) {
+      return `${minutes} min`;
+    }
+    return `${Math.floor(minutes / 60)} h ${minutes % 60} min`;
+  }
+
+  private _renderList(height: number): TemplateResult {
+    const events = [...this._events].sort((a, b) => b.start - a.start);
+    let lastDay: string | null = null;
+
+    return html`<div
+      class="list"
+      style=${styleMap({ height: `${height}px` })}
+      @scroll=${(ev: Event) => this._handleListScroll(ev)}
+      @pointerdown=${(ev: Event) => stopEventFromActivatingCardWideActions(ev)}
+      @click=${(ev: Event) => stopEventFromActivatingCardWideActions(ev)}
+    >
+      ${events.length
+        ? ''
+        : html`<div class="empty">No events loaded for this day yet</div>`}
+      ${repeat(
+        events,
+        (event) => event.id,
+        (event) => {
+          const day = this._formatDate(event.start);
+          const heading = day !== lastDay ? day : null;
+          lastDay = day;
+          return html`${heading ? html`<div class="day">${heading}</div>` : ''}
+            <button
+              class=${classMap({ row: true, selected: event.selected })}
+              @click=${(ev: Event) => this._handleListRowClick(ev, event)}
+            >
+              <advanced-camera-card-icon
+                class="kind"
+                style=${styleMap({ color: event.color })}
+                .icon=${{ icon: event.icon }}
+              ></advanced-camera-card-icon>
+              <span class="text">
+                <span class="label">${event.label}</span>
+                <span class="time"
+                  >${this._formatTime(event.start, false)} •
+                  ${this._formatDuration(event)}</span
+                >
+              </span>
+              ${this.timelineConfig?.scrubber?.thumbnails === false
+                ? ''
+                : html`<advanced-camera-card-thumbnail-feature-thumbnail
+                    class="preview"
+                    .hass=${this.hass}
+                    .thumbnail=${event.thumbnail ?? undefined}
+                  ></advanced-camera-card-thumbnail-feature-thumbnail>`}
+            </button>`;
+        },
+      )}
+    </div>`;
+  }
+
+  private _handleListRowClick(ev: Event, event: ScrubberEvent): void {
+    stopEventFromActivatingCardWideActions(ev);
+    this._stopMomentum();
+    this._interacting = false;
+    this._lastInteractionAt = this._now();
+    if (this._controller.playEvent(event.id)) {
+      this._followLive = false;
+      this._setTime(event.start);
+    }
   }
 
   protected updated(changedProps: PropertyValues): void {

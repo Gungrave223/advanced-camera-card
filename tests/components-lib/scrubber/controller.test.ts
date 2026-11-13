@@ -8,8 +8,10 @@ import type {
   ViewManagerInterface,
 } from '../../../src/card-controller/view/types';
 import {
+  getScrubberEventCategory,
   getScrubberEventColor,
   SCRUBBER_COLORS,
+  SCRUBBER_ICONS,
   ScrubberController,
 } from '../../../src/components-lib/scrubber/controller';
 import type { ConditionStateManagerReadonlyInterface } from '../../../src/condition-trigger/conditions/types';
@@ -109,6 +111,20 @@ describe('getScrubberEventColor', () => {
   });
 });
 
+describe('getScrubberEventCategory', () => {
+  it.each([
+    [['person'], 'person'],
+    [['face'], 'person'],
+    [['cat'], 'animal'],
+    [['truck'], 'vehicle'],
+    [['ups'], 'package'],
+    [[], 'other'],
+    [undefined, 'other'],
+  ])('%s', (what, category) => {
+    expect(getScrubberEventCategory(what)).toBe(category);
+  });
+});
+
 describe('ScrubberController', () => {
   it('should list events in a range from the view', () => {
     const { controller } = createHarness();
@@ -121,6 +137,7 @@ describe('ScrubberController', () => {
       expect.objectContaining({
         label: 'Person',
         color: SCRUBBER_COLORS.person,
+        icon: SCRUBBER_ICONS.person,
         thumbnail: '/thumb/newer',
         selected: true,
         start: new Date('2026-09-02T10:10:00Z').getTime(),

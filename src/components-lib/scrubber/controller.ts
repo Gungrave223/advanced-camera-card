@@ -39,6 +39,7 @@ export interface ScrubberEvent {
   media: EventViewMedia | ReviewViewMedia;
   label: string;
   color: string;
+  icon: string;
   thumbnail: string | null;
   selected: boolean;
 }
@@ -92,25 +93,37 @@ export const SCRUBBER_COLORS = {
   other: '#9aa0a6',
 };
 
-export const getScrubberEventColor = (what: string[] | null | undefined): string => {
-  const first = what?.[0]?.toLowerCase();
-  if (!first) {
-    return SCRUBBER_COLORS.other;
-  }
-  if (first === 'person' || first === 'face') {
-    return SCRUBBER_COLORS.person;
-  }
-  if (ANIMALS.has(first)) {
-    return SCRUBBER_COLORS.animal;
-  }
-  if (VEHICLES.has(first)) {
-    return SCRUBBER_COLORS.vehicle;
-  }
-  if (PACKAGES.has(first)) {
-    return SCRUBBER_COLORS.package;
-  }
-  return SCRUBBER_COLORS.other;
+export type ScrubberEventCategory = 'person' | 'animal' | 'vehicle' | 'package' | 'other';
+
+export const SCRUBBER_ICONS: Record<ScrubberEventCategory, string> = {
+  person: 'mdi:account-outline',
+  animal: 'mdi:paw-outline',
+  vehicle: 'mdi:car-outline',
+  package: 'mdi:package-variant-closed',
+  other: 'mdi:motion-sensor',
 };
+
+export const getScrubberEventCategory = (
+  what: string[] | null | undefined,
+): ScrubberEventCategory => {
+  const first = what?.[0]?.toLowerCase();
+  if (first === 'person' || first === 'face') {
+    return 'person';
+  }
+  if (first && ANIMALS.has(first)) {
+    return 'animal';
+  }
+  if (first && VEHICLES.has(first)) {
+    return 'vehicle';
+  }
+  if (first && PACKAGES.has(first)) {
+    return 'package';
+  }
+  return 'other';
+};
+
+export const getScrubberEventColor = (what: string[] | null | undefined): string =>
+  SCRUBBER_COLORS[getScrubberEventCategory(what)];
 
 const isRecordingsOnly = (query: UnifiedQuery): boolean =>
   query.hasMediaQueriesOfType(QueryType.Recording) &&
@@ -277,6 +290,7 @@ export class ScrubberController {
           media,
           label: getEventLabel(media),
           color: getScrubberEventColor(media.getWhat()),
+          icon: SCRUBBER_ICONS[getScrubberEventCategory(media.getWhat())],
           thumbnail: media.getThumbnail(),
           selected: selected.has(String(item.id)),
         };

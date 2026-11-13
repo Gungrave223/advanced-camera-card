@@ -23,9 +23,139 @@
   user-select: none;
   -webkit-user-select: none;
   cursor: grab;
+}
 
-  // Folding away (swipe down on the video) and back.
+.strip.hidden {
+  display: none;
+}
+
+// The header and the timeline (or list), folded away together by a swipe
+// down on the video.
+.panel {
+  overflow: hidden;
+  background: var(--advanced-camera-card-scrubber-background);
   transition: height 0.2s ease-out;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 8px 0 14px;
+  box-sizing: border-box;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--advanced-camera-card-scrubber-text);
+}
+
+.header .calendar {
+  --mdc-icon-size: 22px;
+  color: var(--advanced-camera-card-scrubber-text-secondary);
+}
+
+.header .date {
+  flex: 1;
+  font-size: 16px;
+}
+
+.header button {
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.header .toggle {
+  display: flex;
+  padding: 8px;
+  border-radius: 50%;
+  --mdc-icon-size: 22px;
+}
+
+.header .toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.list {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 0 8px 8px;
+  box-sizing: border-box;
+}
+
+.list::-webkit-scrollbar {
+  display: none;
+}
+
+.list .day {
+  padding: 12px 8px 4px;
+  font-size: 12px;
+  color: var(--advanced-camera-card-scrubber-text-secondary);
+}
+
+.list .empty {
+  padding: 24px 8px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--advanced-camera-card-scrubber-text-secondary);
+}
+
+.list .row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 10px 8px;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: none;
+  color: var(--advanced-camera-card-scrubber-text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.list .row.selected {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+}
+
+.list .kind {
+  flex: 0 0 auto;
+  --mdc-icon-size: 24px;
+}
+
+.list .text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.list .label {
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.list .time {
+  font-size: 13px;
+  color: var(--advanced-camera-card-scrubber-text-secondary);
+}
+
+.list .preview {
+  flex: 0 0 96px;
+  width: 96px;
+  height: 60px;
+  aspect-ratio: auto;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  --advanced-camera-card-border-radius-final: 8px;
 }
 
 .strip:active {
@@ -122,10 +252,7 @@ canvas {
   color: #fff;
 }
 
-.go-live {
-  position: absolute;
-  top: 8px;
-  right: 8px;
+.header .go-live {
   padding: 4px 12px;
   border: none;
   border-radius: 14px;
