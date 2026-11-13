@@ -563,12 +563,13 @@ export class AdvancedCameraCardScrubber extends LitElement {
   }
 
   private _getBubbleText(): string {
-    if (this._followLive && this._controller.isLive() && !this._interacting) {
-      return 'Live';
-    }
+    // Always with seconds, so the time visibly ticks along with playback.
     const time = this._geometry.time;
+    const clock = this._formatTime(time, true);
+    if (this._followLive && this._controller.isLive() && !this._interacting) {
+      return `Live · ${clock}`;
+    }
     const date = this._formatDate(time);
-    const clock = this._formatTime(time, this._geometry.secondsPerPixel < 5);
     return date === 'Today' ? clock : `${date} ${clock}`;
   }
 
