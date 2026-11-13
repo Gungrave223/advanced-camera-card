@@ -12,6 +12,7 @@ import type { EventViewMedia, ReviewViewMedia } from '../../view/item';
 import { ViewItemClassifier } from '../../view/item-classifier';
 import { QueryResults } from '../../view/query-results';
 import type { UnifiedQuery } from '../../view/unified-query';
+import { UnifiedQueryBuilder } from '../../view/unified-query-builder';
 import { UnifiedQueryTransformer } from '../../view/unified-query-transformer';
 import {
   canMediaBeShownAsTimelineItem,
@@ -55,6 +56,10 @@ export interface ScrubberControllerOptions {
   conditionStateManager?: ConditionStateManagerReadonlyInterface;
   timelineConfig?: MiniTimelineControlConfig;
   query?: UnifiedQuery;
+
+  // The view's camera, used to build a query of its own when the view has
+  // none (e.g. live view with the thumbnail drawer turned off).
+  camera?: string;
 }
 
 const ANIMALS = new Set([
@@ -159,9 +164,8 @@ export class ScrubberController {
   }
 
   public setOptions(options: ScrubberControllerOptions): void {
-    const newShape = options.query
-      ? UnifiedQueryTransformer.stripTimeRange(options.query)
-      : null;
+    const query = options.query ?? this._buildDefaultQuery(options);
+    const newShape = query ? UnifiedQueryTransformer.stripTimeRange(query) : null;
 
     // Seeking opens the continuous recording, whose query only covers
     // recordings. Keep the existing shape (events, reviews and recordings)
@@ -201,6 +205,16 @@ export class ScrubberController {
             options.timelineConfig.show_recordings,
           )
         : null;
+  }
+
+  private _buildDefaultQuery(options: ScrubberControllerOptions): UnifiedQuery | null {
+    if (!options.cameraManager || !options.foldersManager || !options.camera) {
+      return null;
+    }
+    return new UnifiedQueryBuilder(
+      options.cameraManager,
+      options.foldersManager,
+    ).buildDefaultCameraQuery(options.camera);
   }
 
   private _hasSameShape(a?: UnifiedQuery | null, b?: UnifiedQuery | null): boolean {

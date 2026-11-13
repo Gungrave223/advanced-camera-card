@@ -41,6 +41,10 @@ import {
 } from '../config/schema/common/controls/timeline';
 import type { HomeAssistant } from '../ha/types';
 import type { MediaLoadedInfoEventDetail } from '../types';
+import {
+  findMediaAspect,
+  releaseMediaCarouselHeights,
+} from '../components-lib/scrubber/media-layout';
 import scrubberStyle from '../scss/scrubber.scss?inline';
 import { stopEventFromActivatingCardWideActions } from '../utils/action';
 import { contentsChanged } from '../utils/basic';
@@ -171,22 +175,11 @@ export class AdvancedCameraCardScrubber extends LitElement {
   private _containerObserver = new ResizeObserver(() => this._updateFillHeight());
   private _mediaAspect: number | null = null;
 
-  // The last media-loaded event, re-sent after the panel changes size so the
-  // video area measures itself again (it does not notice growing space on its
-  // own, and would otherwise stay off-center).
-  private _lastMediaLoaded: {
-    target: EventTarget;
-    detail: MediaLoadedInfoEventDetail;
-  } | null = null;
   private _relayoutTimer: number | null = null;
+  private _aspectTimer: number | null = null;
   private _mediaLoadedHandler = (ev: CustomEvent<MediaLoadedInfoEventDetail>) => {
     const info = ev.detail?.info;
-    const target = ev.composedPath()[0];
-    if (!info || !target || ev.detail === this._lastMediaLoaded?.detail) {
-      return;
-    }
-    this._lastMediaLoaded = { target, detail: ev.detail };
-    if (info.width > 0 && info.height > 0) {
+    if (info && info.width > 0 && info.height > 0) {
       this._mediaAspect = info.height / info.width;
       this._updateFillHeight();
     }
@@ -196,6 +189,16 @@ export class AdvancedCameraCardScrubber extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
     this._container = this.parentElement;
+    // Until the video's shape is known, keep looking for it (it may already
+    // be playing, or still loading).
+    this._aspectTimer = window.setInterval(() => {
+      if (this._mediaAspect && this._aspectTimer !== null) {
+        window.clearInterval(this._aspectTimer);
+        this._aspectTimer = null;
+        return;
+      }
+      this._updateFillHeight();
+    }, 1000);
     if (this._container) {
       this._containerObserver.observe(this._container);
       this._container.addEventListener(
@@ -223,6 +226,7 @@ export class AdvancedCameraCardScrubber extends LitElement {
       this._wheelTimer,
       this._messageTimer,
       this._relayoutTimer,
+      this._aspectTimer,
     ]) {
       if (timer !== null) {
         window.clearTimeout(timer);
@@ -266,6 +270,7 @@ export class AdvancedCameraCardScrubber extends LitElement {
         conditionStateManager: this.conditionStateManager,
         timelineConfig: this.timelineConfig,
         query: this.viewManagerEpoch?.manager.getView()?.query ?? undefined,
+        camera: this.viewManagerEpoch?.manager.getView()?.camera ?? undefined,
       });
     }
 
@@ -318,6 +323,14 @@ export class AdvancedCameraCardScrubber extends LitElement {
   }
 
   private _updateFillHeight(): void {
+    // The scrubber may appear after the video has loaded (so its load event
+    // was missed): read the shape from the video itself.
+    if (!this._mediaAspect && this._container) {
+      this._mediaAspect = findMediaAspect(
+        this._getMediaRoots(),
+        this._container.clientWidth,
+      );
+    }
     this._setHeight(
       getFillHeight({
         containerWidth: this._container?.clientWidth ?? 0,
@@ -333,22 +346,25 @@ export class AdvancedCameraCardScrubber extends LitElement {
    * Once the panel has finished changing size, have the video area measure
    * itself again so the video is centered in the space it now has.
    */
+  // The other elements in the surround (the video side), to look for the
+  // video and its carousel.
+  private _getMediaRoots(): Element[] {
+    return Array.from(this._container?.children ?? []).filter(
+      (element) => element !== this,
+    );
+  }
+
+  /**
+   * Once the panel has finished changing size, let the video area grow (or
+   * shrink) into the space it now has so the video is centered in it.
+   */
   private _scheduleRelayout(): void {
     if (this._relayoutTimer !== null) {
       window.clearTimeout(this._relayoutTimer);
     }
     this._relayoutTimer = window.setTimeout(() => {
       this._relayoutTimer = null;
-      const last = this._lastMediaLoaded;
-      if (last && (last.target as Node).isConnected) {
-        last.target.dispatchEvent(
-          new CustomEvent('advanced-camera-card:media:loaded', {
-            bubbles: true,
-            composed: true,
-            detail: last.detail,
-          }),
-        );
-      }
+      releaseMediaCarouselHeights(this._getMediaRoots());
     }, RELAYOUT_DELAY_MS);
   }
 
