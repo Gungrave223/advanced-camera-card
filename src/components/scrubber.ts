@@ -98,6 +98,10 @@ export class AdvancedCameraCardScrubber extends LitElement {
   @property({ attribute: false })
   public conditionStateManager?: ConditionStateManagerReadonlyInterface;
 
+  // Hidden by a swipe down on the video (the strip folds away).
+  @property({ type: Boolean, reflect: true })
+  public collapsed = false;
+
   // Bumped to re-render on every animation frame that changes something.
   @state()
   private _frameCount = 0;
@@ -588,7 +592,7 @@ export class AdvancedCameraCardScrubber extends LitElement {
 
     return html`<div
       class="strip"
-      style=${styleMap({ height: `${geometry.height}px` })}
+      style=${styleMap({ height: this.collapsed ? '0px' : `${geometry.height}px` })}
       ${ref(this._refStrip)}
       @pointerdown=${(ev: PointerEvent) => this._handlePointerDown(ev)}
       @pointermove=${(ev: PointerEvent) => this._handlePointerMove(ev)}

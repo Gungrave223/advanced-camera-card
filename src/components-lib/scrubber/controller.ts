@@ -1,6 +1,7 @@
 import { isEqual } from 'lodash-es';
 
 import type { CameraManager } from '../../camera-manager/manager';
+import { QueryType } from '../../camera-manager/types';
 import type { FoldersManager } from '../../card-controller/folders/manager';
 import { MergeContextViewModifier } from '../../card-controller/view/modifiers/merge-context';
 import type { ViewManagerEpoch } from '../../card-controller/view/types';
@@ -111,6 +112,11 @@ export const getScrubberEventColor = (what: string[] | null | undefined): string
   return SCRUBBER_COLORS.other;
 };
 
+const isRecordingsOnly = (query: UnifiedQuery): boolean =>
+  query.hasMediaQueriesOfType(QueryType.Recording) &&
+  !query.hasMediaQueriesOfType(QueryType.Event) &&
+  !query.hasMediaQueriesOfType(QueryType.Review);
+
 const capitalize = (value: string): string =>
   value ? value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, ' ') : value;
 
@@ -140,9 +146,17 @@ export class ScrubberController {
   }
 
   public setOptions(options: ScrubberControllerOptions): void {
-    const shape = options.query
+    const newShape = options.query
       ? UnifiedQueryTransformer.stripTimeRange(options.query)
       : null;
+
+    // Seeking opens the continuous recording, whose query only covers
+    // recordings. Keep the existing shape (events, reviews and recordings)
+    // then, or the event pills and thumbnails would disappear.
+    const shape =
+      this._source && newShape && isRecordingsOnly(newShape)
+        ? this._source.shape
+        : newShape;
 
     const needsRebuild =
       !this._source ||

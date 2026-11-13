@@ -19,7 +19,13 @@ import { ViewMediaType } from '../../../src/view/item';
 import { QueryResults } from '../../../src/view/query-results';
 import { UnifiedQuery } from '../../../src/view/unified-query';
 import { createCameraManager, createStore } from '../../camera-manager/test-utils';
-import { createReviewQuery, createView, TestViewMedia } from '../../view/test-utils';
+import {
+  createEventQuery,
+  createRecordingQuery,
+  createReviewQuery,
+  createView,
+  TestViewMedia,
+} from '../../view/test-utils';
 
 const CAMERA_ID = 'camera-1';
 
@@ -73,15 +79,16 @@ const createHarness = (options?: {
 
   const onChange = vi.fn();
   const controller = new ScrubberController(onChange);
-  controller.setOptions({
+  const controllerOptions = {
     cameraManager: createCameraManager(createStore([{ cameraID: CAMERA_ID }])),
     foldersManager: mock<FoldersManager>(),
     conditionStateManager: mock<ConditionStateManagerReadonlyInterface>(),
     timelineConfig: createConfig(),
     query,
-  });
+  };
+  controller.setOptions(controllerOptions);
   controller.setView(mock<ViewManagerEpoch>({ manager }));
-  return { controller, manager, media, onChange };
+  return { controller, manager, media, onChange, options: controllerOptions };
 };
 
 const RANGE = {
@@ -121,6 +128,27 @@ describe('ScrubberController', () => {
       }),
     );
     expect(events.find((event) => event.id === 'older')?.selected).toBe(false);
+  });
+
+  it('should keep events when a recordings-only query arrives', () => {
+    const { controller, options } = createHarness();
+
+    // Seeking opens the continuous recording, with a recordings-only query.
+    const recordings = new UnifiedQuery();
+    recordings.addNode(createRecordingQuery(CAMERA_ID));
+    controller.setOptions({ ...options, query: recordings });
+
+    expect(controller.getEvents(RANGE)).toHaveLength(2);
+  });
+
+  it('should rebuild for a query with different events', () => {
+    const { controller, options } = createHarness();
+
+    const events = new UnifiedQuery();
+    events.addNode(createEventQuery(CAMERA_ID));
+    controller.setOptions({ ...options, query: events });
+
+    expect(controller.getEvents(RANGE)).toEqual([]);
   });
 
   it('should leave out events outside the range', () => {

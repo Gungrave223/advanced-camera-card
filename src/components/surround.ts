@@ -1,17 +1,19 @@
 import {
   html,
   LitElement,
+  nothing,
   unsafeCSS,
   type CSSResultGroup,
   type PropertyValues,
   type TemplateResult,
 } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 
 import type { CameraManager } from '../camera-manager/manager.js';
 import type { FoldersManager } from '../card-controller/folders/manager.js';
 import type { ViewItemManager } from '../card-controller/view/item-manager.js';
 import type { ViewManagerEpoch } from '../card-controller/view/types.js';
+import { VerticalSwipeTracker } from '../components-lib/scrubber/swipe.js';
 import type { ConditionStateManagerReadonlyInterface } from '../condition-trigger/conditions/types.js';
 import type { ThumbnailsControlConfig } from '../config/schema/common/controls/thumbnails.js';
 import type { MiniTimelineControlConfig } from '../config/schema/common/controls/timeline.js';
@@ -59,6 +61,14 @@ export class AdvancedCameraCardSurround extends LitElement {
   @property({ attribute: false })
   public drawerPinned?: boolean;
 
+  // Swiping down on the video hides the scrubber, swiping up shows it.
+  @state()
+  private _scrubberCollapsed = false;
+
+  private _swipeTracker = new VerticalSwipeTracker((swipe) => {
+    this._scrubberCollapsed = swipe === 'down';
+  });
+
   /**
    * Determine if a drawer is being used.
    */
@@ -105,9 +115,21 @@ export class AdvancedCameraCardSurround extends LitElement {
       }
     };
 
+    const useScrubber =
+      !!this.timelineConfig && this.timelineConfig.mode !== 'none' && this._useScrubber();
+
     return html` <advanced-camera-card-surround-basic
       .locked=${this.locked}
       .drawerPinned=${this.drawerPinned}
+      @touchstart=${useScrubber
+        ? { handleEvent: this._swipeTracker.handleTouchStart, passive: true }
+        : nothing}
+      @touchend=${useScrubber
+        ? { handleEvent: this._swipeTracker.handleTouchEnd, passive: true }
+        : nothing}
+      @touchcancel=${useScrubber
+        ? { handleEvent: this._swipeTracker.handleTouchCancel, passive: true }
+        : nothing}
       @advanced-camera-card:media:footage-time=${(ev: CustomEvent<Date | null>) => {
         const host = ev.currentTarget as HTMLElement;
         host.querySelector('advanced-camera-card-timeline-core')?.setPlayhead(ev.detail);
@@ -132,9 +154,10 @@ export class AdvancedCameraCardSurround extends LitElement {
           >
           </advanced-camera-card-thumbnail-carousel>`
         : ''}
-      ${this.timelineConfig && this.timelineConfig.mode !== 'none' && this._useScrubber()
+      ${this.timelineConfig && useScrubber
         ? html` <advanced-camera-card-scrubber
             slot=${this.timelineConfig.mode}
+            .collapsed=${this._scrubberCollapsed}
             .hass=${this.hass}
             .viewManagerEpoch=${this.viewManagerEpoch}
             .timelineConfig=${this.timelineConfig}

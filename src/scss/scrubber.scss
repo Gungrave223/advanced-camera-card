@@ -23,6 +23,9 @@
   user-select: none;
   -webkit-user-select: none;
   cursor: grab;
+
+  // Folding away (swipe down on the video) and back.
+  transition: height 0.2s ease-out;
 }
 
 .strip:active {
