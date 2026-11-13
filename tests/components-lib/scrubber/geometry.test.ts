@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   chooseTickStepSeconds,
   clampSecondsPerPixel,
+  getFillHeight,
   getTicks,
   getVisibleRange,
   layoutEvents,
@@ -185,5 +186,27 @@ describe('scrubber geometry', () => {
     expect(first.distance).toBe(16);
     expect(first.velocity).toBeCloseTo(0.95);
     expect(stepMomentum(1, 32).velocity).toBeCloseTo(0.9025);
+  });
+
+  describe('should fill the space the video does not need', () => {
+    const base = {
+      containerWidth: 450,
+      containerHeight: 1000,
+      headerHeight: 44,
+      minHeight: 280,
+    };
+
+    it('should take what is left under a square video', () => {
+      expect(getFillHeight({ ...base, mediaAspect: 1 })).toBe(1000 - 450 - 44);
+    });
+
+    it('should not go below the configured height', () => {
+      expect(getFillHeight({ ...base, containerHeight: 700, mediaAspect: 1 })).toBe(280);
+    });
+
+    it('should use the configured height until the video size is known', () => {
+      expect(getFillHeight({ ...base, mediaAspect: null })).toBe(280);
+      expect(getFillHeight({ ...base, containerHeight: 0, mediaAspect: 1 })).toBe(280);
+    });
   });
 });

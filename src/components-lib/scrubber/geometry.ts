@@ -237,3 +237,32 @@ export const stepMomentum = (
   const decay = Math.pow(decayPer16ms, elapsedMs / 16);
   return { velocity: velocity * decay, distance: velocity * elapsedMs };
 };
+
+/**
+ * Height for the scrubber's strip (or list) so that, together with its
+ * header, it takes all the space the video does not need: the video keeps
+ * its full width-limited height and there is no empty band around it. Never
+ * less than the configured height (on wide screens the video shrinks
+ * instead).
+ */
+export const getFillHeight = (options: {
+  containerWidth: number;
+  containerHeight: number;
+  // Video height divided by width, or null if not known yet.
+  mediaAspect: number | null;
+  headerHeight: number;
+  minHeight: number;
+}): number => {
+  if (
+    !options.mediaAspect ||
+    options.containerWidth <= 0 ||
+    options.containerHeight <= 0
+  ) {
+    return options.minHeight;
+  }
+  const mediaHeight = options.containerWidth * options.mediaAspect;
+  return Math.max(
+    options.minHeight,
+    Math.floor(options.containerHeight - mediaHeight - options.headerHeight),
+  );
+};

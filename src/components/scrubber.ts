@@ -22,6 +22,7 @@ import {
 } from '../components-lib/scrubber/controller';
 import {
   getTicks,
+  getFillHeight,
   getVisibleRange,
   layoutEventsAbsolute,
   layoutToScreen,
@@ -39,6 +40,7 @@ import {
   type MiniTimelineControlConfig,
 } from '../config/schema/common/controls/timeline';
 import type { HomeAssistant } from '../ha/types';
+import type { MediaLoadedInfoEventDetail } from '../types';
 import scrubberStyle from '../scss/scrubber.scss?inline';
 import { stopEventFromActivatingCardWideActions } from '../utils/action';
 import { contentsChanged } from '../utils/basic';
@@ -71,6 +73,10 @@ const WHEEL_SETTLE_MS = 350;
 
 // Height of the header row (date and the timeline / list toggle).
 const HEADER_HEIGHT = 44;
+
+// After the panel changes size (it animates for 0.2s), wait this long before
+// asking the video area to re-measure.
+const RELAYOUT_DELAY_MS = 300;
 
 // Load the previous day when the list is scrolled this close to its end.
 const LIST_LOAD_MORE_PX = 200;
@@ -158,10 +164,45 @@ export class AdvancedCameraCardScrubber extends LitElement {
   private _absoluteLayoutKey: string | null = null;
 
   private _resizeObserver = new ResizeObserver(() => this._measure());
+
+  // The surround the scrubber sits in, watched to fill the space the video
+  // does not need.
+  private _container: HTMLElement | null = null;
+  private _containerObserver = new ResizeObserver(() => this._updateFillHeight());
+  private _mediaAspect: number | null = null;
+
+  // The last media-loaded event, re-sent after the panel changes size so the
+  // video area measures itself again (it does not notice growing space on its
+  // own, and would otherwise stay off-center).
+  private _lastMediaLoaded: {
+    target: EventTarget;
+    detail: MediaLoadedInfoEventDetail;
+  } | null = null;
+  private _relayoutTimer: number | null = null;
+  private _mediaLoadedHandler = (ev: CustomEvent<MediaLoadedInfoEventDetail>) => {
+    const info = ev.detail?.info;
+    const target = ev.composedPath()[0];
+    if (!info || !target || ev.detail === this._lastMediaLoaded?.detail) {
+      return;
+    }
+    this._lastMediaLoaded = { target, detail: ev.detail };
+    if (info.width > 0 && info.height > 0) {
+      this._mediaAspect = info.height / info.width;
+      this._updateFillHeight();
+    }
+  };
   private _wheelHandler = (ev: WheelEvent) => this._handleWheel(ev);
 
   connectedCallback(): void {
     super.connectedCallback();
+    this._container = this.parentElement;
+    if (this._container) {
+      this._containerObserver.observe(this._container);
+      this._container.addEventListener(
+        'advanced-camera-card:media:loaded',
+        this._mediaLoadedHandler,
+      );
+    }
     this._liveTimer = window.setInterval(() => {
       if (this._followLive && !this._interacting) {
         this._requestFrame();
@@ -171,7 +212,18 @@ export class AdvancedCameraCardScrubber extends LitElement {
 
   disconnectedCallback(): void {
     this._resizeObserver.disconnect();
-    for (const timer of [this._liveTimer, this._wheelTimer, this._messageTimer]) {
+    this._containerObserver.disconnect();
+    this._container?.removeEventListener(
+      'advanced-camera-card:media:loaded',
+      this._mediaLoadedHandler,
+    );
+    this._container = null;
+    for (const timer of [
+      this._liveTimer,
+      this._wheelTimer,
+      this._messageTimer,
+      this._relayoutTimer,
+    ]) {
       if (timer !== null) {
         window.clearTimeout(timer);
       }
@@ -218,12 +270,7 @@ export class AdvancedCameraCardScrubber extends LitElement {
     }
 
     if (changedProps.has('timelineConfig')) {
-      const height = this.timelineConfig?.scrubber?.height ?? scrubberConfigDefault.height;
-      this._geometry = {
-        ...this._geometry,
-        height,
-        playheadY: Math.round(height * PLAYHEAD_PROPORTION),
-      };
+      this._updateFillHeight();
     }
 
     if (changedProps.has('viewManagerEpoch')) {
@@ -255,6 +302,54 @@ export class AdvancedCameraCardScrubber extends LitElement {
         this._geometry = { ...this._geometry, time: selected.start.getTime() };
       }
     }
+  }
+
+  private _setHeight(height: number): void {
+    if (height === this._geometry.height) {
+      return;
+    }
+    this._geometry = {
+      ...this._geometry,
+      height,
+      playheadY: Math.round(height * PLAYHEAD_PROPORTION),
+    };
+    this._requestFrame();
+    this._scheduleRelayout();
+  }
+
+  private _updateFillHeight(): void {
+    this._setHeight(
+      getFillHeight({
+        containerWidth: this._container?.clientWidth ?? 0,
+        containerHeight: this._container?.clientHeight ?? 0,
+        mediaAspect: this._mediaAspect,
+        headerHeight: HEADER_HEIGHT,
+        minHeight: this.timelineConfig?.scrubber?.height ?? scrubberConfigDefault.height,
+      }),
+    );
+  }
+
+  /**
+   * Once the panel has finished changing size, have the video area measure
+   * itself again so the video is centered in the space it now has.
+   */
+  private _scheduleRelayout(): void {
+    if (this._relayoutTimer !== null) {
+      window.clearTimeout(this._relayoutTimer);
+    }
+    this._relayoutTimer = window.setTimeout(() => {
+      this._relayoutTimer = null;
+      const last = this._lastMediaLoaded;
+      if (last && (last.target as Node).isConnected) {
+        last.target.dispatchEvent(
+          new CustomEvent('advanced-camera-card:media:loaded', {
+            bubbles: true,
+            composed: true,
+            detail: last.detail,
+          }),
+        );
+      }
+    }, RELAYOUT_DELAY_MS);
   }
 
   protected firstUpdated(): void {
@@ -812,6 +907,9 @@ export class AdvancedCameraCardScrubber extends LitElement {
 
   protected updated(changedProps: PropertyValues): void {
     super.updated(changedProps);
+    if (changedProps.has('collapsed') && changedProps.get('collapsed') !== undefined) {
+      this._scheduleRelayout();
+    }
     this._draw();
   }
 
