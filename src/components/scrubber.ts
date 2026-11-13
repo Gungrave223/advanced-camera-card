@@ -121,6 +121,10 @@ export class AdvancedCameraCardScrubber extends LitElement {
   @property({ type: Boolean, reflect: true })
   public collapsed = false;
 
+  // Below the video, or beside it on the right (full height, fixed width).
+  @property({ type: String, reflect: true })
+  public position: 'below' | 'right' = 'below';
+
   // Bumped to re-render on every animation frame that changes something.
   @state()
   private _frameCount = 0;
@@ -329,6 +333,14 @@ export class AdvancedCameraCardScrubber extends LitElement {
   }
 
   private _updateFillHeight(): void {
+    if (this.position === 'right') {
+      // Beside the video the strip simply takes the full height.
+      const containerHeight = this._container?.clientHeight ?? 0;
+      if (containerHeight > HEADER_HEIGHT) {
+        this._setHeight(Math.max(100, containerHeight - HEADER_HEIGHT));
+      }
+      return;
+    }
     // The scrubber may appear after the video has loaded (so its load event
     // was missed): read the shape from the video itself.
     if (!this._mediaAspect && this._container) {
@@ -744,9 +756,18 @@ export class AdvancedCameraCardScrubber extends LitElement {
 
     return html`<div
       class="panel"
-      style=${styleMap({
-        height: this.collapsed ? '0px' : `${geometry.height + HEADER_HEIGHT}px`,
-      })}
+      style=${styleMap(
+        this.position === 'right'
+          ? {
+              height: `${geometry.height + HEADER_HEIGHT}px`,
+              width: this.collapsed
+                ? '0px'
+                : `${this.timelineConfig?.scrubber?.width ?? scrubberConfigDefault.width}px`,
+            }
+          : {
+              height: this.collapsed ? '0px' : `${geometry.height + HEADER_HEIGHT}px`,
+            },
+      )}
     >
       ${this._renderHeader(live)}
       <div
@@ -940,6 +961,10 @@ export class AdvancedCameraCardScrubber extends LitElement {
   protected updated(changedProps: PropertyValues): void {
     super.updated(changedProps);
     if (changedProps.has('collapsed') && changedProps.get('collapsed') !== undefined) {
+      this._scheduleRelayout();
+    }
+    if (changedProps.has('position') && changedProps.get('position') !== undefined) {
+      this._updateFillHeight();
       this._scheduleRelayout();
     }
     this._draw();

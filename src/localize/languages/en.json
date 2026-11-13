@@ -330,7 +330,13 @@
           "scrubber": {
             "editor_label": "Vertical scrubber",
             "height": "Height in pixels",
-            "thumbnails": "Show thumbnails beside events"
+            "thumbnails": "Show thumbnails beside events",
+            "position": "Position",
+            "positions": {
+              "below": "Below the video",
+              "right": "Right of the video"
+            },
+            "width": "Width in pixels (when on the right)"
           }
         },
         "wheel": "Scroll wheel scrolls media carousel"

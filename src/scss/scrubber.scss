@@ -37,6 +37,23 @@
   transition: height 0.2s ease-out;
 }
 
+// Beside the video: a full-height column that folds away sideways.
+:host([position='right']) {
+  width: auto;
+  flex: none;
+  height: 100%;
+}
+
+:host([position='right']) .panel {
+  transition: width 0.2s ease-out;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  box-sizing: border-box;
+}
+
+:host([position='right'][collapsed]) .panel {
+  border-left: none;
+}
+
 .header {
   display: flex;
   align-items: center;

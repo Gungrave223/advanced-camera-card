@@ -54,6 +54,8 @@ export const miniTimelineConfigDefault = {
 export const scrubberConfigDefault = {
   height: 280,
   thumbnails: true,
+  position: 'below' as const,
+  width: 380,
 };
 
 const scrubberConfigSchema = z.object({
@@ -67,6 +69,18 @@ const scrubberConfigSchema = z.object({
     .boolean()
     .optional()
     .default(scrubberConfigDefault.thumbnails),
+  // `below` the video, or `right` of it (the strip then takes the full height).
+  position: z
+    .enum(['below', 'right'])
+    .optional()
+    .default(scrubberConfigDefault.position),
+  // Width in pixels when on the right.
+  width: z
+    .number()
+    .min(200)
+    .max(1000)
+    .optional()
+    .default(scrubberConfigDefault.width),
 });
 export type ScrubberConfig = z.infer<typeof scrubberConfigSchema>;
 

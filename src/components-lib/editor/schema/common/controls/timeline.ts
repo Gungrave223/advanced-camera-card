@@ -134,6 +134,25 @@ export const getMiniTimelineSchema = (): HAFormExpandableSchema => ({
           label: localize('config.common.controls.timeline.scrubber.thumbnails'),
           selector: { boolean: {} },
         },
+        {
+          name: 'position',
+          label: localize('config.common.controls.timeline.scrubber.position'),
+          selector: createSelectSelector([
+            {
+              value: 'below',
+              label: localize('config.common.controls.timeline.scrubber.positions.below'),
+            },
+            {
+              value: 'right',
+              label: localize('config.common.controls.timeline.scrubber.positions.right'),
+            },
+          ]),
+        },
+        {
+          name: 'width',
+          label: localize('config.common.controls.timeline.scrubber.width'),
+          selector: createNumberSelector(),
+        },
       ],
     },
   ],

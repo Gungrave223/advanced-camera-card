@@ -1,4 +1,5 @@
 import {
+  css,
   html,
   LitElement,
   nothing,
@@ -118,6 +119,26 @@ export class AdvancedCameraCardSurround extends LitElement {
     const useScrubber =
       !!this.timelineConfig && this.timelineConfig.mode !== 'none' && this._useScrubber();
 
+    // On the right, the scrubber sits in a row beside the main content
+    // instead of in one of the surround's (column) slots.
+    const scrubberRight =
+      useScrubber && this.timelineConfig?.scrubber?.position === 'right';
+    const scrubber =
+      this.timelineConfig && useScrubber
+        ? html` <advanced-camera-card-scrubber
+            slot=${scrubberRight ? nothing : this.timelineConfig.mode}
+            .position=${scrubberRight ? 'right' : 'below'}
+            .collapsed=${this._scrubberCollapsed}
+            .hass=${this.hass}
+            .viewManagerEpoch=${this.viewManagerEpoch}
+            .timelineConfig=${this.timelineConfig}
+            .cameraManager=${this.cameraManager}
+            .foldersManager=${this.foldersManager}
+            .conditionStateManager=${this.conditionStateManager}
+          >
+          </advanced-camera-card-scrubber>`
+        : null;
+
     return html` <advanced-camera-card-surround-basic
       .locked=${this.locked}
       .drawerPinned=${this.drawerPinned}
@@ -154,18 +175,10 @@ export class AdvancedCameraCardSurround extends LitElement {
           >
           </advanced-camera-card-thumbnail-carousel>`
         : ''}
-      ${this.timelineConfig && useScrubber
-        ? html` <advanced-camera-card-scrubber
-            slot=${this.timelineConfig.mode}
-            .collapsed=${this._scrubberCollapsed}
-            .hass=${this.hass}
-            .viewManagerEpoch=${this.viewManagerEpoch}
-            .timelineConfig=${this.timelineConfig}
-            .cameraManager=${this.cameraManager}
-            .foldersManager=${this.foldersManager}
-            .conditionStateManager=${this.conditionStateManager}
-          >
-          </advanced-camera-card-scrubber>`
+      ${scrubberRight
+        ? ''
+        : scrubber
+        ? scrubber
         : this.timelineConfig && this.timelineConfig.mode !== 'none'
         ? html` <advanced-camera-card-timeline-core
             slot=${this.timelineConfig.mode}
@@ -188,12 +201,29 @@ export class AdvancedCameraCardSurround extends LitElement {
           >
           </advanced-camera-card-timeline-core>`
         : ''}
-      <slot></slot>
+      ${scrubberRight
+        ? html`<div class="scrubber-row"><slot></slot>${scrubber}</div>`
+        : html`<slot></slot>`}
     </advanced-camera-card-surround-basic>`;
   }
 
   static get styles(): CSSResultGroup {
-    return unsafeCSS(basicBlockStyle);
+    return [
+      unsafeCSS(basicBlockStyle),
+      css`
+        .scrubber-row {
+          display: flex;
+          flex-direction: row;
+          min-width: 0;
+          min-height: 0;
+        }
+        .scrubber-row ::slotted(*) {
+          flex: 1;
+          min-width: 0;
+          min-height: 0;
+        }
+      `,
+    ];
   }
 }
 
