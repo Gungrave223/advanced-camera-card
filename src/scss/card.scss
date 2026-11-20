@@ -148,6 +148,16 @@ ha-card {
   :host(:fullscreen) {
     --advanced-camera-card-menu-top-offset: 51px;
   }
+
+  // Keep the video below the menu instead of running up under the cutout: a
+  // band as tall as the offset plus the menu (46px). The media is already
+  // below the menu, so it drops the offset inside.
+  :host(:fullscreen) div.main,
+  :host(:-webkit-full-screen) div.main {
+    box-sizing: border-box;
+    padding-top: 97px;
+    --advanced-camera-card-menu-top-offset: 0px;
+  }
 }
 :host(:fullscreen) #ha-card {
   @include fullscreen-ha-card;

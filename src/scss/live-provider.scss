@@ -40,12 +40,11 @@
   top: calc(16px + var(--advanced-camera-card-menu-top-offset, 0px));
   left: 16px;
   z-index: 3;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.65);
-  color: #4caf50;
-  font-size: 14px;
+  color: #81e889;
+  font-size: 12px;
   font-weight: 700;
+  // No background: a soft shadow keeps it readable over bright video.
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.9), 0 1px 2px rgba(0, 0, 0, 0.8);
   letter-spacing: 0.5px;
   text-transform: uppercase;
   pointer-events: none;
