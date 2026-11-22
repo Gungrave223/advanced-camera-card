@@ -170,10 +170,12 @@ export class ScrubberController {
 
     // Seeking opens the continuous recording, whose query only covers
     // recordings. Keep the existing shape (events, reviews and recordings)
-    // then, or the event pills and thumbnails would disappear.
+    // then, or the event pills and thumbnails would disappear. A card opened
+    // straight into a recording (e.g. from a notification link) has no such
+    // shape yet, so it uses the camera's default query instead.
     const shape =
-      this._source && newShape && isRecordingsOnly(newShape)
-        ? this._source.shape
+      newShape && isRecordingsOnly(newShape)
+        ? this._getShapeWithEvents(options) ?? newShape
         : newShape;
 
     const needsRebuild =
@@ -206,6 +208,16 @@ export class ScrubberController {
             options.timelineConfig.show_recordings,
           )
         : null;
+  }
+
+  private _getShapeWithEvents(options: ScrubberControllerOptions): UnifiedQuery | null {
+    if (this._source && !isRecordingsOnly(this._source.shape)) {
+      return this._source.shape;
+    }
+    const query = this._buildDefaultQuery(options);
+    return query && !isRecordingsOnly(query)
+      ? UnifiedQueryTransformer.stripTimeRange(query)
+      : null;
   }
 
   private _buildDefaultQuery(options: ScrubberControllerOptions): UnifiedQuery | null {
@@ -457,11 +469,26 @@ export class ScrubberController {
       },
       modifiers: [
         new MergeContextViewModifier({
-          ...(seek && item.media?.getEndTime() && { mediaViewer: { seek } }),
+          ...(seek &&
+            item.media?.getEndTime() && {
+              mediaViewer: { seek: this._getChangedSeek(seek) },
+            }),
         }),
       ],
     });
     return true;
+  }
+
+  /**
+   * The viewer only seeks when the requested time changes, so tapping the
+   * event that is already open (or has finished playing) would do nothing.
+   * Ask for 1 ms later then, so the tap always restarts it.
+   */
+  private _getChangedSeek(seek: Date): Date {
+    const current = this._viewManagerEpoch?.manager
+      .getView()
+      ?.context?.mediaViewer?.seek?.getTime();
+    return current === seek.getTime() ? new Date(seek.getTime() + 1) : seek;
   }
 
   private async _openRecordingAtTime(time: Date): Promise<boolean> {

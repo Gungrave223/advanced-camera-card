@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { mock } from 'vitest-mock-extended';
 
+import { QueryType } from '../../../src/camera-manager/types';
 import type { FoldersManager } from '../../../src/card-controller/folders/manager';
 import { MergeContextViewModifier } from '../../../src/card-controller/view/modifiers/merge-context';
 import type {
@@ -20,6 +21,7 @@ import type { MiniTimelineControlConfig } from '../../../src/config/schema/commo
 import { ViewMediaType } from '../../../src/view/item';
 import { QueryResults } from '../../../src/view/query-results';
 import { UnifiedQuery } from '../../../src/view/unified-query';
+import { UnifiedQueryBuilder } from '../../../src/view/unified-query-builder';
 import { createCameraManager, createStore } from '../../camera-manager/test-utils';
 import {
   createEventQuery,
@@ -164,6 +166,55 @@ describe('ScrubberController', () => {
     expect(controller.getEvents(RANGE)).toHaveLength(2);
   });
 
+  it('should show events when opened straight into a recording', () => {
+    const reviews = new UnifiedQuery();
+    reviews.addNode(createReviewQuery(CAMERA_ID));
+    const spy = vi
+      .spyOn(UnifiedQueryBuilder.prototype, 'buildDefaultCameraQuery')
+      .mockReturnValue(reviews);
+
+    const recordings = new UnifiedQuery();
+    recordings.addNode(createRecordingQuery(CAMERA_ID));
+    const controller = new ScrubberController(vi.fn());
+    controller.setOptions({
+      cameraManager: createCameraManager(createStore([{ cameraID: CAMERA_ID }])),
+      foldersManager: mock<FoldersManager>(),
+      conditionStateManager: mock<ConditionStateManagerReadonlyInterface>(),
+      timelineConfig: createConfig(),
+      query: recordings,
+      camera: CAMERA_ID,
+    });
+
+    const shape = (controller as unknown as { _source: { shape: UnifiedQuery } })
+      ._source.shape;
+    expect(shape.hasMediaQueriesOfType(QueryType.Review)).toBe(true);
+    spy.mockRestore();
+  });
+
+  it('should keep a recordings-only shape when the camera has no events', () => {
+    const recordings = new UnifiedQuery();
+    recordings.addNode(createRecordingQuery(CAMERA_ID));
+    const spy = vi
+      .spyOn(UnifiedQueryBuilder.prototype, 'buildDefaultCameraQuery')
+      .mockReturnValue(recordings);
+
+    const controller = new ScrubberController(vi.fn());
+    controller.setOptions({
+      cameraManager: createCameraManager(createStore([{ cameraID: CAMERA_ID }])),
+      foldersManager: mock<FoldersManager>(),
+      conditionStateManager: mock<ConditionStateManagerReadonlyInterface>(),
+      timelineConfig: createConfig(),
+      query: recordings,
+      camera: CAMERA_ID,
+    });
+
+    const shape = (controller as unknown as { _source: { shape: UnifiedQuery } })
+      ._source.shape;
+    expect(shape.hasMediaQueriesOfType(QueryType.Recording)).toBe(true);
+    expect(shape.hasMediaQueriesOfType(QueryType.Review)).toBe(false);
+    spy.mockRestore();
+  });
+
   it('should rebuild for a query with different events', () => {
     const { controller, options } = createHarness();
 
@@ -248,6 +299,32 @@ describe('ScrubberController', () => {
     // Oldest first, so the viewer's next control moves forward in time.
     expect(call?.params?.queryResults?.getResults()).toEqual([media[1], media[0]]);
     expect(call?.params?.queryResults?.getSelectedResult()).toBe(media[1]);
+  });
+
+  it('should restart an event that is already open', () => {
+    const { controller, manager, media } = createHarness();
+    const start = media[1].getStartTime() as Date;
+    const getSeek = (index: number): number | undefined => {
+      const view = createView();
+      manager.setViewByParameters.mock.calls[index][0]?.modifiers?.forEach(
+        (modifier) => modifier.modify(view),
+      );
+      return view.context?.mediaViewer?.seek?.getTime();
+    };
+
+    expect(controller.playEvent('older')).toBe(true);
+    expect(getSeek(0)).toBe(start.getTime());
+
+    // The viewer already has this seek time, so a second tap must change it.
+    manager.getView.mockReturnValue(
+      createView({
+        view: 'media',
+        camera: CAMERA_ID,
+        context: { mediaViewer: { seek: new Date(start) } },
+      }),
+    );
+    expect(controller.playEvent('older')).toBe(true);
+    expect(getSeek(1)).toBe(start.getTime() + 1);
   });
 
   it('should not play an unknown event', () => {
