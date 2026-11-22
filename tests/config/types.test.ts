@@ -191,7 +191,7 @@ describe('config defaults', () => {
           back_to_live: false,
           tap_to_play_pause: false,
           footage_time: true,
-          event_tags: true,
+          event_tags: false,
           next_previous: {
             auto_hide: ['casting'],
             size: 48,

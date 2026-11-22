@@ -26,6 +26,8 @@ advanced-camera-card-progress-indicator {
 }
 
 .back-to-live {
+  // Hidden by the surround while the scrubber is on screen.
+  display: var(--advanced-camera-card-back-to-live-display, block);
   position: absolute;
   bottom: 16px;
   left: 50%;

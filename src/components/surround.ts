@@ -86,6 +86,26 @@ export class AdvancedCameraCardSurround extends LitElement {
     return this.timelineConfig?.style === 'scrubber';
   }
 
+  /**
+   * The media viewer's Back to live button is only needed when the scrubber
+   * is not on screen (swiped away, or not used): while it is showing, it
+   * scrolls back to now itself. The viewer is slotted into this element, so a
+   * custom property set here reaches the button.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected updated(_changedProperties: PropertyValues): void {
+    const scrubberShowing =
+      !!this.timelineConfig &&
+      this.timelineConfig.mode !== 'none' &&
+      this._useScrubber() &&
+      !this._scrubberCollapsed;
+    if (scrubberShowing) {
+      this.style.setProperty('--advanced-camera-card-back-to-live-display', 'none');
+    } else {
+      this.style.removeProperty('--advanced-camera-card-back-to-live-display');
+    }
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected willUpdate(_changedProperties: PropertyValues): void {
     if (this.timelineConfig?.mode && this.timelineConfig.mode !== 'none') {

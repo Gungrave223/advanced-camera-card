@@ -336,7 +336,8 @@
               "below": "Below the video",
               "right": "Right of the video"
             },
-            "width": "Width in pixels (when on the right)"
+            "width": "Width in pixels (when on the right)",
+            "event_history": "Show the event history (list) switch"
           }
         },
         "wheel": "Scroll wheel scrolls media carousel"

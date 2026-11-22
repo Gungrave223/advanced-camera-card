@@ -153,6 +153,11 @@ export const getMiniTimelineSchema = (): HAFormExpandableSchema => ({
           label: localize('config.common.controls.timeline.scrubber.width'),
           selector: createNumberSelector(),
         },
+        {
+          name: 'event_history',
+          label: localize('config.common.controls.timeline.scrubber.event_history'),
+          selector: { boolean: {} },
+        },
       ],
     },
   ],

@@ -56,6 +56,7 @@ export const scrubberConfigDefault = {
   thumbnails: true,
   position: 'below' as const,
   width: 380,
+  event_history: false,
 };
 
 const scrubberConfigSchema = z.object({
@@ -81,6 +82,11 @@ const scrubberConfigSchema = z.object({
     .max(1000)
     .optional()
     .default(scrubberConfigDefault.width),
+  // Whether the header has the switch to the event history (list) view.
+  event_history: z
+    .boolean()
+    .optional()
+    .default(scrubberConfigDefault.event_history),
 });
 export type ScrubberConfig = z.infer<typeof scrubberConfigSchema>;
 

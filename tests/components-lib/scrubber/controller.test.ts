@@ -39,7 +39,13 @@ const createConfig = (): MiniTimelineControlConfig => ({
   format: { '24h': true },
   mode: 'below',
   pan_mode: 'pan',
-  scrubber: { height: 280, thumbnails: true, position: 'below', width: 380 },
+  scrubber: {
+    height: 280,
+    thumbnails: true,
+    position: 'below',
+    width: 380,
+    event_history: false,
+  },
 });
 
 const createReview = (id: string, start: string, end: string, what = ['person']) =>

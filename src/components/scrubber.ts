@@ -837,7 +837,8 @@ export class AdvancedCameraCardScrubber extends LitElement {
         : html`<button class="go-live" @click=${(ev: Event) => this._handleLiveClick(ev)}>
             Live
           </button>`}
-      <button
+      ${this.timelineConfig?.scrubber?.event_history
+        ? html`<button
         class="toggle"
         title=${list ? 'Timeline view' : 'Event history view'}
         aria-label=${list ? 'Timeline view' : 'Event history view'}
@@ -846,7 +847,8 @@ export class AdvancedCameraCardScrubber extends LitElement {
         <advanced-camera-card-icon
           .icon=${{ icon: list ? 'mdi:timeline-clock-outline' : 'mdi:view-list-outline' }}
         ></advanced-camera-card-icon>
-      </button>
+      </button>`
+        : ''}
     </div>`;
   }
 

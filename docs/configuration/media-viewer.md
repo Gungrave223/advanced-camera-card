@@ -34,10 +34,10 @@ media_viewer:
 | Option              | Default | Description                                                                                                         |
 | ------------------- | ------- | ------------------------------------------------------------------------------------------------------------------- |
 | `builtin`           | `true`  | Whether to show the built in (browser) video controls on media viewer videos.                                       |
-| `back_to_live`      | `false` | Whether to show a button on the video that returns to the live view.                                                |
+| `back_to_live`      | `false` | Whether to show a button on the video that returns to the live view. With the scrubber timeline it only shows while the scrubber is swiped away. |
 | `tap_to_play_pause` | `false` | Whether tapping the video plays or pauses it.                                                                       |
-| `footage_time` | `true` | Whether to show the real time of the footage playing (from the recording segment times) at the top right of the video. |
-| `event_tags` | `true` | Whether to show what an event at the current footage time was tagged as (labels, recognized faces, zones) above the Back to live button. |
+| `footage_time` | `true` | Whether to show the time of day of the recording playing (from the recording segment times) at the top left of the video, where the LIVE label is in live view. Shown for videos (recordings, clips, reviews), not snapshots. |
+| `event_tags` | `false` | Whether to show what an event at the current footage time was tagged as (labels, recognized faces, zones) above the Back to live button. |
 | `next_previous`     |         | Configures how the "Next & Previous" controls are shown on the media viewer. See [`next_previous`](#next_previous). |
 | `thumbnails`        |         | Configures how thumbnails are shown on the media viewer. See [`thumbnails`](#thumbnails).                           |
 | `timeline`          |         | Configures how the mini-timeline is shown on the media viewer. See [`timeline`](#timeline).                         |

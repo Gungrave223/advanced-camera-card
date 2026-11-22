@@ -11,12 +11,15 @@ import {
 import { fireAdvancedCameraCardEvent } from '../../utils/fire-advanced-camera-card-event.js';
 import { Timer } from '../../utils/timer.js';
 import type { ViewMedia } from '../../view/item.js';
+import { ViewItemClassifier } from '../../view/item-classifier.js';
 
 const UPDATE_INTERVAL_SECONDS = 0.5;
 
 /**
- * Shows the real-world time of the footage currently playing, and what any event
- * at that time is tagged as. Players only know their position in the video, which
+ * Shows the real-world time of the video currently playing back (recordings,
+ * and event clips or reviews picked on the timeline; time of day only, where the
+ * LIVE label sits in live view), and optionally what any event at
+ * that time is tagged as. Players only know their position in the video, which
  * for hour-long recordings is not the time the footage was captured.
  */
 @customElement('advanced-camera-card-viewer-footage-time')
@@ -104,8 +107,8 @@ export class AdvancedCameraCardViewerFootageTime extends LitElement {
     return html`${this.showLabels && this._labels
       ? html`<div class="labels">${this._labels}</div>`
       : ''}
-    ${this.showTime && this._time
-      ? html`<div class="time">${format(this._time, 'EEE, MMM d, h:mm:ss a')}</div>`
+    ${this.showTime && this._time && ViewItemClassifier.isVideo(this.media)
+      ? html`<div class="time">${format(this._time, 'h:mm:ss a')}</div>`
       : ''}`;
   }
 
@@ -126,21 +129,28 @@ export class AdvancedCameraCardViewerFootageTime extends LitElement {
       }
       div {
         position: absolute;
-        padding: 4px 10px;
-        border-radius: 6px;
-        background: rgba(0, 0, 0, 0.65);
       }
       /* Above the back to live button, with some space between them. */
       .labels {
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.65);
         bottom: 72px;
         left: 50%;
         transform: translateX(-50%);
         font-size: 18px;
         text-transform: capitalize;
       }
+      /* Where (and styled like) the LIVE label in live view: the host is inset 8px. */
       .time {
-        top: calc(56px + var(--advanced-camera-card-menu-top-offset, 0px));
-        right: 0;
+        top: calc(16px + var(--advanced-camera-card-menu-top-offset, 0px));
+        left: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-shadow:
+          0 0 3px rgba(0, 0, 0, 0.9),
+          0 1px 2px rgba(0, 0, 0, 0.8);
       }
     `;
   }

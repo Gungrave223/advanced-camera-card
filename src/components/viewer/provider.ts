@@ -396,7 +396,7 @@ export class AdvancedCameraCardViewerProvider extends LitElement implements Medi
         .cameraManager=${this.cameraManager}
         .getPosition=${this._getPosition}
         .showTime=${this.viewerConfig?.controls.footage_time ?? true}
-        .showLabels=${this.viewerConfig?.controls.event_tags ?? true}
+        .showLabels=${this.viewerConfig?.controls.event_tags ?? false}
       ></advanced-camera-card-viewer-footage-time>
       ${isVideo && this.viewerConfig?.controls.back_to_live
         ? html`<button
