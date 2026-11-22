@@ -36,7 +36,7 @@ media_viewer:
 | `builtin`           | `true`  | Whether to show the built in (browser) video controls on media viewer videos.                                       |
 | `back_to_live`      | `false` | Whether to show a button on the video that returns to the live view. With the scrubber timeline it only shows while the scrubber is swiped away. |
 | `tap_to_play_pause` | `false` | Whether tapping the video plays or pauses it.                                                                       |
-| `footage_time` | `true` | Whether to show the time of day of the recording playing (from the recording segment times) at the top left of the video, where the LIVE label is in live view. Shown for videos (recordings, clips, reviews), not snapshots. |
+| `footage_time` | `true` | Whether to show the time of day of the recording playing (from the recording segment times) at the top left of the video, where the LIVE label is in live view, on the user's Home Assistant 12 / 24 hour clock (profile Time format). Shown for videos (recordings, clips, reviews), not snapshots. |
 | `event_tags` | `false` | Whether to show what an event at the current footage time was tagged as (labels, recognized faces, zones) above the Back to live button. |
 | `next_previous`     |         | Configures how the "Next & Previous" controls are shown on the media viewer. See [`next_previous`](#next_previous). |
 | `thumbnails`        |         | Configures how thumbnails are shown on the media viewer. See [`thumbnails`](#thumbnails).                           |
@@ -133,8 +133,20 @@ media_viewer:
 | `mode`                 | `none`   | Whether to show the thumbnail carousel `below` the media, `above` the media, in a drawer to the `left` or `right` of the media or to hide it entirely (`none`).                                                                                                                                                                                                                                                                 |
 | `pan_mode`             | `pan`    | See [timeline pan mode](timeline-pan-mode.md).                                                                                                                                                                                                                                                                                                                                                                                  |
 | `show_recordings`      | `true`   | Whether to show recordings on the timeline (specifically: which hours have any recorded content).                                                                                                                                                                                                                                                                                                                               |
-| `style`                | `ribbon` | Whether the timeline should show events as a single flat `ribbon` or a `stack` of events that are clustered using the `clustering_threshold`.                                                                                                                                                                                                                                                                                   |
+| `style`                | `ribbon` | Whether the timeline should show events as a single flat `ribbon` or a `stack` of events that are clustered using the `clustering_threshold`. `scrubber` shows a separate vertical timeline instead, see [`scrubber`](#scrubber).                                                                                                                                                                                                                                                                                   |
 | `window_seconds`       | `3600`   | The length of the default timeline in seconds. By default, 1 hour (`3600` seconds) is shown in the timeline.                                                                                                                                                                                                                                                                                                                    |
+
+#### `scrubber`
+
+Options for `style: scrubber`, a separate vertical timeline with a fixed playhead: drag (with fling) or scroll to move through the footage, pinch or ctrl+wheel to zoom. Continuous recordings show as a bar and events as colored pills with thumbnails. Swiping down on the video hides the scrubber and swiping up shows it again.
+
+| Option          | Default | Description                                                                                                 |
+| --------------- | ------- | ----------------------------------------------------------------------------------------------------------- |
+| `height`        | `280`   | Height of the scrubber in pixels when it is below the video (`100` - `2000`).                              |
+| `thumbnails`    | `true`  | Whether to show thumbnails beside events.                                                                   |
+| `position`      | `below` | Whether the scrubber sits `below` the video or to the `right` of it (it then takes the full height).        |
+| `width`         | `380`   | Width in pixels when the scrubber is on the `right` (`200` - `1000`).                                      |
+| `event_history` | `false` | Whether the scrubber header has the switch to the event history (list) view.                                |
 
 [](common/timeline-seek-info.md ':include')
 
