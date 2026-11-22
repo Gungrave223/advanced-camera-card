@@ -3,6 +3,8 @@ import { css, html, LitElement, type CSSResultGroup, type TemplateResult } from 
 import { customElement, property, state } from 'lit/decorators.js';
 
 import type { CameraManager } from '../../camera-manager/manager.js';
+import type { HomeAssistant } from '../../ha/types.js';
+import { uses24HourClock } from '../../utils/ha-time-format.js';
 import {
   EventLabelProvider,
   formatEventLabels,
@@ -17,8 +19,8 @@ const UPDATE_INTERVAL_SECONDS = 0.5;
 
 /**
  * Shows the real-world time of the video currently playing back (recordings,
- * and event clips or reviews picked on the timeline; time of day only, where the
- * LIVE label sits in live view), and optionally what any event at
+ * and event clips or reviews picked on the timeline; time of day only, on the user's
+ * 12 / 24 hour clock, where the LIVE label sits in live view), and optionally what any event at
  * that time is tagged as. Players only know their position in the video, which
  * for hour-long recordings is not the time the footage was captured.
  */
@@ -29,6 +31,10 @@ export class AdvancedCameraCardViewerFootageTime extends LitElement {
 
   @property({ attribute: false })
   public cameraManager?: CameraManager;
+
+  // Only used to follow the user's 12 / 24 hour setting.
+  @property({ attribute: false })
+  public hass?: HomeAssistant;
 
   @property({ attribute: false })
   public getPosition?: () => Promise<number | null>;
@@ -108,7 +114,7 @@ export class AdvancedCameraCardViewerFootageTime extends LitElement {
       ? html`<div class="labels">${this._labels}</div>`
       : ''}
     ${this.showTime && this._time && ViewItemClassifier.isVideo(this.media)
-      ? html`<div class="time">${format(this._time, 'h:mm:ss a')}</div>`
+      ? html`<div class="time">${format(this._time, uses24HourClock(this.hass) ? 'HH:mm:ss' : 'h:mm:ss a')}</div>`
       : ''}`;
   }
 

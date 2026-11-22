@@ -392,6 +392,7 @@ export class AdvancedCameraCardViewerProvider extends LitElement implements Medi
             ></advanced-camera-card-image-player>`}
       `)}
       <advanced-camera-card-viewer-footage-time
+        .hass=${this.hass}
         .media=${this.media}
         .cameraManager=${this.cameraManager}
         .getPosition=${this._getPosition}
