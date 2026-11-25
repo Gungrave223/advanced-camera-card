@@ -141,6 +141,11 @@ export class AdvancedCameraCardCarousel extends LitElement {
 
       if (!contentChanged && this.selected !== this._carousel.getSelectedIndex()) {
         this._carousel.selectSlide(this.selected);
+      } else if (contentChanged) {
+        // The selection changed along with the slides (e.g. a clip tapped in a
+        // different list): select it once the carousel has the new slides, or
+        // it keeps the old position and the selected media never loads.
+        this._carousel.selectSlideAfterContentChange(this.selected);
       }
     }
     this._previousSlideCount = currentSlideCount;

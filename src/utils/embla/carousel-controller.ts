@@ -24,6 +24,7 @@ export class CarouselController {
   private _root: HTMLElement;
   private _direction: CarouselDirection;
   private _startIndex: number;
+  private _pendingSelectedIndex: number | null = null;
   private _transitionEffect: TransitionEffect;
   private _loop: boolean;
 
@@ -116,11 +117,36 @@ export class CarouselController {
     this._draggable = enabled;
   }
 
+  /**
+   * Select a slide once the carousel has caught up with a change of slides.
+   * The slides are refreshed asynchronously (on slotchange / mutation), so a
+   * selection made in the same update as the change would apply to the old
+   * slides, and the refresh would then keep the old position. The selected
+   * media then never scrolls into view, so it never loads.
+   */
+  public selectSlideAfterContentChange(index: number): void {
+    if (isEqual(this._carousel.slideNodes(), getChildrenFromElement(this._parent))) {
+      this._pendingSelectedIndex = null;
+      this.selectSlide(index);
+    } else {
+      this._pendingSelectedIndex = index;
+    }
+  }
+
   private _refreshCarouselContents = (): void => {
     const slides = getChildrenFromElement(this._parent);
     const slidesChanged = !isEqual(this._carousel.slideNodes(), slides);
+    const pending = this._pendingSelectedIndex;
+    this._pendingSelectedIndex = null;
     if (slidesChanged) {
-      this._carousel.reInit({ slides });
+      this._carousel.reInit({
+        slides,
+        ...(pending !== null &&
+          pending >= 0 &&
+          pending < slides.length && { startIndex: pending }),
+      });
+    } else if (pending !== null) {
+      this.selectSlide(pending);
     }
   };
 

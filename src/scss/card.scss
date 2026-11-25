@@ -160,6 +160,13 @@ ha-card {
   padding-top: 97px;
   --advanced-camera-card-menu-top-offset: 0px;
 }
+// Expanded mode (e.g. a notification link, where browsers refuse fullscreen
+// without a tap) fills the screen below the status bar, so there is no cutout to
+// avoid: keep the video below the menu with a band as tall as the menu (46px).
+:host([expanded]) div.main {
+  box-sizing: border-box;
+  padding-top: 46px;
+}
 :host(:fullscreen) #ha-card {
   @include fullscreen-ha-card;
 }

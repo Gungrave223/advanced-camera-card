@@ -351,4 +351,72 @@ describe('CarouselController', () => {
     // Should still be same carousel instance (no new creation)
     expect(EmblaCarousel).toHaveBeenCalledTimes(1);
   });
+
+  it('should reinit at a selection made before the slides changed', () => {
+    const children = createTestSlideNodes();
+    const parent = createParent({ children: children });
+    const carousel = new CarouselController(createRoot(), parent);
+
+    const emblaApi = getEmblaApi();
+    emblaApi?.slideNodes.mockReturnValue(children);
+    const newChild = document.createElement('div');
+    parent.appendChild(newChild);
+
+    carousel.selectSlideAfterContentChange(2);
+    expect(emblaApi?.scrollTo).not.toHaveBeenCalled();
+
+    callMutationHandler();
+    expect(emblaApi?.reInit).toHaveBeenCalledWith({
+      slides: [...children, newChild],
+      startIndex: 2,
+    });
+
+    // The pending selection is used once only.
+    emblaApi?.slideNodes.mockReturnValue([...children, newChild]);
+    parent.appendChild(document.createElement('div'));
+    callMutationHandler();
+    expect(emblaApi?.reInit).toHaveBeenLastCalledWith({
+      slides: [...children, newChild, parent.lastElementChild],
+    });
+  });
+
+  it('should select at once when the slides already match', () => {
+    const children = createTestSlideNodes();
+    const parent = createParent({ children: children });
+    const carousel = new CarouselController(createRoot(), parent);
+
+    const emblaApi = getEmblaApi();
+    emblaApi?.slideNodes.mockReturnValue(children);
+
+    carousel.selectSlideAfterContentChange(4);
+    expect(emblaApi?.scrollTo).toHaveBeenCalledWith(4, false);
+    expect(emblaApi?.reInit).not.toHaveBeenCalled();
+  });
+
+  it('should select a pending slide when a refresh finds no change', () => {
+    const children = createTestSlideNodes();
+    const parent = createParent({ children: children });
+    const carousel = new CarouselController(createRoot(), parent);
+
+    const emblaApi = getEmblaApi();
+    emblaApi?.slideNodes.mockReturnValue(children.slice(1));
+    carousel.selectSlideAfterContentChange(3);
+
+    emblaApi?.slideNodes.mockReturnValue(children);
+    callMutationHandler();
+    expect(emblaApi?.reInit).not.toHaveBeenCalled();
+    expect(emblaApi?.scrollTo).toHaveBeenCalledWith(3, false);
+  });
+
+  it('should ignore an out of range pending selection on reinit', () => {
+    const children = createTestSlideNodes({ n: 3 });
+    const parent = createParent({ children: children });
+    const carousel = new CarouselController(createRoot(), parent);
+
+    const emblaApi = getEmblaApi();
+    emblaApi?.slideNodes.mockReturnValue(children.slice(1));
+    carousel.selectSlideAfterContentChange(7);
+    callMutationHandler();
+    expect(emblaApi?.reInit).toHaveBeenCalledWith({ slides: children });
+  });
 });
